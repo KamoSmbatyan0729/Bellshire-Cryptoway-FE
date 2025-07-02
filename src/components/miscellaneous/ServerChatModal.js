@@ -16,7 +16,7 @@ import axios from "axios";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 
-const GroupChatModal = ({ children }) => {
+const ServerChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
@@ -26,7 +26,7 @@ const GroupChatModal = ({ children }) => {
   const handleSubmit = async () => {
     if (!groupChatName) {
       toast({
-        title: "Please fill group name",
+        title: "Please fill server name",
         status: "warning",
         duration: 5000,
         isClosable: true,
@@ -42,16 +42,16 @@ const GroupChatModal = ({ children }) => {
         },
       };
       const { data } = await axios.post(
-        `/api/chat/group`,
+        `/api/chat/server/create`,
         {
-          serverName: groupChatName,
+          name: groupChatName,
         },
         config
       );
       setChats([data, ...chats]);
       onClose();
       toast({
-        title: "New Group Chat Created!",
+        title: "New Server Created!",
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -82,7 +82,7 @@ const GroupChatModal = ({ children }) => {
             d="flex"
             justifyContent="center"
           >
-            Create Group Chat
+            Create Server
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody d="flex" flexDir="column" alignItems="center">
@@ -96,7 +96,7 @@ const GroupChatModal = ({ children }) => {
           </ModalBody>
           <ModalFooter>
             <Button onClick={handleSubmit} colorScheme="blue">
-              Create Group
+              Create Server
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -105,4 +105,4 @@ const GroupChatModal = ({ children }) => {
   );
 };
 
-export default GroupChatModal;
+export default ServerChatModal;

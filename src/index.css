@@ -11,3 +11,7 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.add-server-btn .chakra-button__icon, .add-group-btn .chakra-button__icon {
+  margin: 0;
+}

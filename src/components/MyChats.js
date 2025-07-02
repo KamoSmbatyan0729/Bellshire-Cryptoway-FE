@@ -41,7 +41,7 @@ const MyChats = ({ fetchAgain }) => {
 
   useEffect(() => {
     setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
-    fetchChats();
+    // fetchChats();
     // eslint-disable-next-line
   }, [fetchAgain]);
 
@@ -66,14 +66,14 @@ const MyChats = ({ fetchAgain }) => {
         justifyContent="space-between"
         alignItems="center"
       >
-        My Chats
+        Groups
         <GroupChatModal>
           <Button
+            className="add-group-btn"
             d="flex"
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
           >
-            New Group Chat
           </Button>
         </GroupChatModal>
       </Box>
