@@ -1,49 +1,63 @@
-import { Avatar } from "@chakra-ui/avatar";
 import { Tooltip } from "@chakra-ui/tooltip";
 import ScrollableFeed from "react-scrollable-feed";
-import {
-  isLastMessage,
-  isSameSender,
-  isSameSenderMargin,
-  isSameUser,
-} from "../config/ChatLogics";
+import { Text } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
+import { HiDotsVertical } from "react-icons/hi";
+import {
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+} from "@chakra-ui/menu";
 
-const ScrollableChat = ({ messages }) => {
+const ScrollableChat = ({ messages, handleEdit, handleRemove }) => {
   const { user } = ChatState();
-
+  function handleClickAddress(address){
+    navigator.clipboard.writeText(address);
+  }
   return (
-    <ScrollableFeed>
+    <ScrollableFeed className="overflow-x-hidden">
       {messages &&
         messages.map((m, i) => (
-          <div style={{ display: "flex" }} key={m._id}>
-            {(isSameSender(messages, m, i, user._id) ||
-              isLastMessage(messages, i, user._id)) && (
-              <Tooltip label={m.sender.name} placement="bottom-start" hasArrow>
-                <Avatar
-                  mt="7px"
-                  mr={1}
-                  size="sm"
-                  cursor="pointer"
-                  name={m.sender.name}
-                  src={m.sender.pic}
-                />
-              </Tooltip>
-            )}
-            <span
-              style={{
-                backgroundColor: `${
-                  m.sender._id === user._id ? "#BEE3F8" : "#B9F5D0"
-                }`,
-                marginLeft: isSameSenderMargin(messages, m, i, user._id),
-                marginTop: isSameUser(messages, m, i, user._id) ? 3 : 10,
-                borderRadius: "20px",
-                padding: "5px 15px",
-                maxWidth: "75%",
-              }}
-            >
-              {m.content}
-            </span>
+          <div key={m.message_id} className={(m.sender_wallet === user._id ? "justify-end" : "justify-start") + " flex"}>   
+            <div className="my-2">
+              {
+                m.sender_wallet !== user._id &&                
+                <Tooltip label={m.sender_wallet} placement="bottom-start" hasArrow>
+                  <Text className="cursor-pointer !my-1" onClick={() => handleClickAddress(m.sender_wallet)}>
+                    {m.sender_wallet.substring(0, 6) + "..." + m.sender_wallet.slice(-4)}
+                  </Text>
+                </Tooltip>
+              }
+              <div className="relative">
+                <span
+                  style={{
+                    backgroundColor: `${
+                      m.sender_wallet === user._id ? "#BEE3F8" : "#B9F5D0"
+                    }`,
+                    borderRadius: "5px",
+                    padding: "5px 30px 5px 15px",
+                    maxWidth: "75%",
+                  }}
+                >
+                  {m.content}
+                </span>
+                {
+                  m.sender_wallet === user._id &&                  
+                  <div className="absolute top-0 right-0">
+                    <Menu isLazy>
+                      <MenuButton p={1}>
+                        <HiDotsVertical />
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={() => handleEdit(m)}>Edit</MenuItem>
+                        <MenuItem onClick={() => handleRemove(m.message_id)}>Remove</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  </div>
+                }
+              </div>
+            </div>         
           </div>
         ))}
     </ScrollableFeed>

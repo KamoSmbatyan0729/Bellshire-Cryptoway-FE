@@ -3,19 +3,20 @@ import { Input } from "@chakra-ui/input";
 import { Box, Text } from "@chakra-ui/layout";
 import "./styles.css";
 import { IconButton, Spinner, useToast } from "@chakra-ui/react";
-import { getSender, getSenderFull } from "../config/ChatLogics";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import ProfileModal from "./miscellaneous/ProfileModal";
 import ScrollableChat from "./ScrollableChat";
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
-
+import { useRef } from "react";
 import io from "socket.io-client";
-import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
-const ENDPOINT = "http://localhost:5000"; // "https://talk-a-tive.herokuapp.com"; -> After deployment
+import { MdEdit } from "react-icons/md";
+import { MdOutlineClose } from "react-icons/md";
+import EmojiPicker from 'emoji-picker-react';
+import { MdEmojiEmotions } from "react-icons/md";
+const ENDPOINT = process.env.REACT_APP_BACKEND_URL;
 var socket, selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
@@ -26,6 +27,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [typing, setTyping] = useState(false);
   const [istyping, setIsTyping] = useState(false);
   const toast = useToast();
+  const typingTimeoutRef = useRef(null);
+  const lastTypingTimeRef = useRef(null);
+  const inputRef = useRef(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editMessage, setEditMessage] = useState(null);
+  const [clickEmoji, setClickEmoji] = useState(false);
 
   const defaultOptions = {
     loop: true,
@@ -35,11 +42,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-  const { selectedChat, setSelectedChat, user, notification, setNotification } =
+  const { selectedGroup, setSelectedGroup, user, notification, setNotification } =
     ChatState();
 
   const fetchMessages = async () => {
-    if (!selectedChat) return;
+    if (!selectedGroup) return;
 
     try {
       const config = {
@@ -51,13 +58,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setLoading(true);
 
       const { data } = await axios.get(
-        `/api/message/${selectedChat._id}`,
+        `/api/message/get-messages/${selectedGroup.group_id}`,
         config
       );
-      setMessages(data);
+      setMessages(data.messages);
       setLoading(false);
 
-      socket.emit("join chat", selectedChat._id);
+      socket.emit("join group", selectedGroup.group_id);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -72,25 +79,28 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
-      socket.emit("stop typing", selectedChat._id);
+      if(editMode){
+        try {
+          socket.emit("edit message", {groupId: selectedGroup.group_id, messageId: editMessage.message_id, newContent: newMessage});
+          setEditMode(false)
+          setEditMessage(null);
+          setNewMessage("");
+          return ;
+        } catch (error) {
+          toast({
+            title: "Error Occured!",
+            description: "Failed to send the Message",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom",
+          });
+        }
+      }
+      socket.emit("stop typing", selectedGroup.group_id);
       try {
-        const config = {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
         setNewMessage("");
-        const { data } = await axios.post(
-          "/api/message",
-          {
-            content: newMessage,
-            chatId: selectedChat,
-          },
-          config
-        );
-        socket.emit("new message", data);
-        setMessages([...messages, data]);
+        socket.emit("new message", {content: newMessage, groupId: selectedGroup.group_id});
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -105,62 +115,104 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   useEffect(() => {
-    socket = io(ENDPOINT);
+    socket = io(ENDPOINT, {
+      auth: { token: user.token },
+    });
     socket.emit("setup", user);
     socket.on("connected", () => setSocketConnected(true));
     socket.on("typing", () => setIsTyping(true));
     socket.on("stop typing", () => setIsTyping(false));
+    
 
     // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
-    fetchMessages();
-
-    selectedChatCompare = selectedChat;
-    // eslint-disable-next-line
-  }, [selectedChat]);
-
-  useEffect(() => {
-    socket.on("message recieved", (newMessageRecieved) => {
+    socket.on("message received", (newMessageRecieved) => {
       if (
         !selectedChatCompare || // if chat is not selected or doesn't match current chat
-        selectedChatCompare._id !== newMessageRecieved.chat._id
-      ) {
-        if (!notification.includes(newMessageRecieved)) {
-          setNotification([newMessageRecieved, ...notification]);
+        selectedChatCompare.group_id !== newMessageRecieved[0].group_id
+      ) { 
+        if (!notification.some((n) => newMessageRecieved[0].message_id === n.message_id)) {
+          setNotification([...notification, newMessageRecieved[0] ].slice(0, 10));
           setFetchAgain(!fetchAgain);
         }
       } else {
-        setMessages([...messages, newMessageRecieved]);
+        setMessages([...messages, newMessageRecieved[0]]);
       }
     });
-  });
+    socket.on("delete message", (messageId) => {
+      const filteredMessages = messages.filter(
+        (msg) => msg.message_id !== messageId
+      );
+      setMessages(filteredMessages);
+
+    })
+    socket.on("edit", (message) => {  
+      const updatedMessages = messages.map((msg) =>
+        msg.message_id === message[0].message_id ? message[0] : msg
+      );
+      setMessages(updatedMessages);
+    })
+  })
+
+  useEffect(() => {
+    fetchMessages();
+
+    selectedChatCompare = selectedGroup;
+    // eslint-disable-next-line
+  }, [selectedGroup]);
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
-
     if (!socketConnected) return;
+    if (e.target.value.trim() === "") {
+      if (typing) {
+        socket.emit("stop typing", selectedGroup.group_id);
+        setTyping(false);
+      }
+      return;
+    }
 
     if (!typing) {
       setTyping(true);
-      socket.emit("typing", selectedChat._id);
+      socket.emit("typing", selectedGroup.group_id);
     }
-    let lastTypingTime = new Date().getTime();
-    var timerLength = 3000;
-    setTimeout(() => {
-      var timeNow = new Date().getTime();
-      var timeDiff = timeNow - lastTypingTime;
-      if (timeDiff >= timerLength && typing) {
-        socket.emit("stop typing", selectedChat._id);
+
+    lastTypingTimeRef.current = new Date().getTime();
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      const timeNow = new Date().getTime();
+      const timeDiff = timeNow - lastTypingTimeRef.current;
+
+      if (timeDiff >= 3000 && typing) {
+        socket.emit("stop typing", selectedGroup.group_id);
         setTyping(false);
       }
-    }, timerLength);
+    }, 3000);
   };
+  function handleEdit(message){
+    setEditMode(true);
+    setEditMessage(message)
+    setNewMessage(message.content)
+    inputRef.current?.focus();
+  }
+  function handleRemove(messageId){
+    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.group_id});
 
+  }
+  function handleCloseEditMode(){
+    setEditMode(false)
+    setEditMessage(null);
+    setNewMessage('')
+  }
   return (
     <>
-      {selectedChat ? (
+      {selectedGroup ? (
         <>
           <Text
             fontSize={{ base: "28px", md: "30px" }}
@@ -175,26 +227,26 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             <IconButton
               d={{ base: "flex", md: "none" }}
               icon={<ArrowBackIcon />}
-              onClick={() => setSelectedChat("")}
+              onClick={() => setSelectedGroup("")}
             />
-            {messages &&
-              (!selectedChat.isGroupChat ? (
+            {/* {messages &&
+              (!selectedGroup.isGroupChat ? (
                 <>
-                  {getSender(user, selectedChat.users)}
+                  {getSender(user, selectedGroup.users)}
                   <ProfileModal
-                    user={getSenderFull(user, selectedChat.users)}
+                    user={getSenderFull(user, selectedGroup.users)}
                   />
                 </>
               ) : (
                 <>
-                  {selectedChat.chatName.toUpperCase()}
+                  {selectedGroup.chatName.toUpperCase()}
                   <UpdateGroupChatModal
                     fetchMessages={fetchMessages}
                     fetchAgain={fetchAgain}
                     setFetchAgain={setFetchAgain}
                   />
                 </>
-              ))}
+              ))} */}
           </Text>
           <Box
             d="flex"
@@ -217,7 +269,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               />
             ) : (
               <div className="messages">
-                <ScrollableChat messages={messages} />
+                <ScrollableChat messages={messages} handleEdit={handleEdit} handleRemove={handleRemove}/>
               </div>
             )}
 
@@ -226,6 +278,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               id="first-name"
               isRequired
               mt={3}
+              className="relative"
             >
               {istyping ? (
                 <div>
@@ -239,13 +292,38 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               ) : (
                 <></>
               )}
+              {
+                editMode &&
+                <div className="flex items-center justify-between p-3 bg-[#e0e0e0]">
+                  <div className="flex items-center">
+                    <MdEdit />
+                    <div className="ml-3">
+                      <Text>Edit Message</Text>
+                      <Text>{editMessage.content}</Text>
+                    </div>
+                  </div>
+                  <div>
+                    <MdOutlineClose className="cursor-pointer" onClick={handleCloseEditMode}/>
+                  </div>
+                </div>
+              }
               <Input
                 variant="filled"
                 bg="#E0E0E0"
                 placeholder="Enter a message.."
                 value={newMessage}
                 onChange={typingHandler}
+                ref={inputRef}
               />
+              <div className="absolute right-5 bottom-[6px] cursor-pointer" onClick={() => {setClickEmoji(!clickEmoji)}}>
+                <MdEmojiEmotions size={30}/>
+              </div>
+              {
+                clickEmoji &&
+                <div className="absolute right-0 bottom-[105%]">
+                  <EmojiPicker />
+                </div>
+              }
             </FormControl>
           </Box>
         </>
@@ -253,7 +331,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         // to get socket.io on same page
         <Box d="flex" alignItems="center" justifyContent="center" h="100%">
           <Text fontSize="3xl" pb={3} fontFamily="Work sans">
-            Click on a user to start chatting
+            Click on a group to start chatting
           </Text>
         </Box>
       )}

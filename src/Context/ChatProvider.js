@@ -5,12 +5,14 @@ const ChatContext = createContext();
 
 const ChatProvider = ({ children }) => {
   const [selectedChat, setSelectedChat] = useState();
+  const [selectedServer, setSelectedServer] = useState();
   const [user, setUser] = useState();
   const [notification, setNotification] = useState([]);
   const [chats, setChats] = useState();
   const [myServers, setMyServers] = useState([]);
   const [joinedServers, setJoinedServers] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState();
 
   const history = useHistory();
 
@@ -39,6 +41,10 @@ const ChatProvider = ({ children }) => {
         setJoinedServers,
         groups,
         setGroups,
+        selectedServer,
+        setSelectedServer,
+        selectedGroup,
+        setSelectedGroup
       }}
     >
       {children}

@@ -1,11 +1,10 @@
-import { Button } from "@chakra-ui/button";
+import { Button, IconButton } from "@chakra-ui/button";
 import { useDisclosure } from "@chakra-ui/hooks";
 import { Input } from "@chakra-ui/input";
 import { Box, Text } from "@chakra-ui/layout";
 import {
   Menu,
   MenuButton,
-  MenuDivider,
   MenuItem,
   MenuList,
 } from "@chakra-ui/menu";
@@ -17,7 +16,7 @@ import {
   DrawerOverlay,
 } from "@chakra-ui/modal";
 import { Tooltip } from "@chakra-ui/tooltip";
-import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { BellIcon, ChevronDownIcon, LinkIcon } from "@chakra-ui/icons";
 import { Avatar } from "@chakra-ui/avatar";
 import { useHistory } from "react-router-dom";
 import { useState } from "react";
@@ -25,12 +24,10 @@ import axios from "axios";
 import { useToast } from "@chakra-ui/toast";
 import ChatLoading from "../ChatLoading";
 import { Spinner } from "@chakra-ui/spinner";
-import ProfileModal from "./ProfileModal";
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
-import { getSender } from "../../config/ChatLogics";
-import UserListItem from "../userAvatar/UserListItem";
 import { ChatState } from "../../Context/ChatProvider";
+import ConfirmModal from "./ConfirmModal";
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
@@ -43,8 +40,8 @@ function SideDrawer() {
     user,
     notification,
     setNotification,
-    chats,
-    setChats,
+    setJoinedServers,
+    joinedServers
   } = ChatState();
 
   const toast = useToast();
@@ -77,10 +74,10 @@ function SideDrawer() {
         },
       };
 
-      const { data } = await axios.get(`/api/user?search=${search}`, config);
+      const { data } = await axios.get(`/api/chat/server/search?query=${search}`, config);
 
       setLoading(false);
-      setSearchResult(data);
+      setSearchResult(data.servers);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -93,8 +90,7 @@ function SideDrawer() {
     }
   };
 
-  const accessChat = async (userId) => {
-    console.log(userId);
+  const handleJoinServer = async (serverId) => {
 
     try {
       setLoadingChat(true);
@@ -104,15 +100,14 @@ function SideDrawer() {
           Authorization: `Bearer ${user.token}`,
         },
       };
-      const { data } = await axios.post(`/api/chat`, { userId }, config);
+      const { data } = await axios.post(`/api/chat/server/join`, { serverId }, config);
 
-      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
-      setSelectedChat(data);
+      setJoinedServers(data.joinedServers);
       setLoadingChat(false);
       onClose();
     } catch (error) {
       toast({
-        title: "Error fetching the chat",
+        title: "Error Joining the server",
         description: error.message,
         status: "error",
         duration: 5000,
@@ -133,11 +128,11 @@ function SideDrawer() {
         p="5px 10px 5px 10px"
         borderWidth="5px"
       >
-        <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
+        <Tooltip label="Search Servers to join" hasArrow placement="bottom-end">
           <Button variant="ghost" onClick={onOpen}>
             <i className="fas fa-search"></i>
             <Text d={{ base: "none", md: "flex" }} px={4}>
-              Search User
+              Search Server
             </Text>
           </Button>
         </Tooltip>
@@ -157,15 +152,13 @@ function SideDrawer() {
               {!notification.length && "No New Messages"}
               {notification.map((notif) => (
                 <MenuItem
-                  key={notif._id}
+                  key={notif.message_id}
                   onClick={() => {
                     setSelectedChat(notif.chat);
                     setNotification(notification.filter((n) => n !== notif));
                   }}
                 >
-                  {notif.chat.isGroupChat
-                    ? `New Message in ${notif.chat.chatName}`
-                    : `New Message from ${getSender(user, notif.chat.users)}`}
+                  {`New Message from ${notif.sender_wallet}`}
                 </MenuItem>
               ))}
             </MenuList>
@@ -180,10 +173,6 @@ function SideDrawer() {
               />
             </MenuButton>
             <MenuList>
-              <ProfileModal user={user}>
-                <MenuItem>My Profile</MenuItem>{" "}
-              </ProfileModal>
-              <MenuDivider />
               <MenuItem onClick={logoutHandler}>Logout</MenuItem>
             </MenuList>
           </Menu>
@@ -197,7 +186,7 @@ function SideDrawer() {
           <DrawerBody>
             <Box d="flex" pb={2}>
               <Input
-                placeholder="Search by name or email"
+                placeholder="Search by name"
                 mr={2}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -205,16 +194,45 @@ function SideDrawer() {
               <Button onClick={handleSearch}>Go</Button>
             </Box>
             {loading ? (
-              <ChatLoading />
-            ) : (
-              searchResult?.map((user) => (
-                <UserListItem
-                  key={user._id}
-                  user={user}
-                  handleFunction={() => accessChat(user._id)}
-                />
-              ))
-            )}
+                <ChatLoading />
+              ) : (
+                searchResult?.map((server) => {
+                  if (!joinedServers.some((s) => s.server_id === server.server_id)) {
+                    return (
+                      <Box
+                        key={server.server_id}
+                        cursor="pointer"
+                        bg="#E8E8E8"
+                        _hover={{
+                          background: "#38B2AC",
+                          color: "white",
+                        }}
+                        w="100%"
+                        d="flex"
+                        alignItems="center"
+                        color="black"
+                        px={3}
+                        py={2}
+                        mb={2}
+                        borderRadius="lg"
+                        className="flex justify-between items-center"
+                      >
+                        <Box>
+                          <Text>{server.server_name}</Text>
+                        </Box>
+                        <ConfirmModal
+                          title="Join Confirmation"
+                          description="Are you sure you want to join?"
+                          onConfirm={() => handleJoinServer(server.server_id)}
+                        >
+                          <IconButton aria-label="Join Server" colorScheme="red" icon={<LinkIcon />} />
+                        </ConfirmModal>
+                      </Box>
+                    );
+                  }
+                  return null;
+                })
+              )}
             {loadingChat && <Spinner ml="auto" d="flex" />}
           </DrawerBody>
         </DrawerContent>

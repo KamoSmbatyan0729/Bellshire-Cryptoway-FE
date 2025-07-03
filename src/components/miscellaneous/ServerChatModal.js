@@ -21,7 +21,7 @@ const ServerChatModal = ({ children }) => {
   const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
 
-  const { user, chats, setChats } = ChatState();
+  const { user, setMyServers } = ChatState();
 
   const handleSubmit = async () => {
     if (!groupChatName) {
@@ -44,11 +44,11 @@ const ServerChatModal = ({ children }) => {
       const { data } = await axios.post(
         `/api/chat/server/create`,
         {
-          name: groupChatName,
+          serverName: groupChatName,
         },
         config
       );
-      setChats([data, ...chats]);
+      setMyServers(data.myserver);
       onClose();
       toast({
         title: "New Server Created!",

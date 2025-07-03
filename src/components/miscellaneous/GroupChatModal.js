@@ -21,7 +21,7 @@ const GroupChatModal = ({ children }) => {
   const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
 
-  const { user, chats, setChats } = ChatState();
+  const { user, selectedServer, setGroups } = ChatState();
 
   const handleSubmit = async () => {
     if (!groupChatName) {
@@ -42,13 +42,14 @@ const GroupChatModal = ({ children }) => {
         },
       };
       const { data } = await axios.post(
-        `/api/chat/group`,
+        `/api/chat/group/create`,
         {
-          serverName: groupChatName,
+          groupName: groupChatName,
+          serverId: selectedServer.server_id
         },
         config
       );
-      setChats([data, ...chats]);
+      setGroups(data.groups);
       onClose();
       toast({
         title: "New Group Chat Created!",
@@ -60,7 +61,7 @@ const GroupChatModal = ({ children }) => {
     } catch (error) {
       toast({
         title: "Failed to Create the Chat!",
-        description: error.response.data,
+        description: error.data,
         status: "error",
         duration: 5000,
         isClosable: true,

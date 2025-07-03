@@ -1,23 +1,22 @@
-import { AddIcon } from "@chakra-ui/icons";
+import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { getSender } from "../config/ChatLogics";
+import { useEffect } from "react";
 import ChatLoading from "./ChatLoading";
 import GroupChatModal from "./miscellaneous/GroupChatModal";
-import { Button } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
+import ConfirmModal from "./miscellaneous/ConfirmModal";
+import { Button, IconButton } from "@chakra-ui/react";
 
 const MyChats = ({ fetchAgain }) => {
-  const [loggedUser, setLoggedUser] = useState();
 
-  const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
+  const { selectedGroup, setSelectedGroup, user, selectedServer, setGroups, groups, myServers } = ChatState();
 
   const toast = useToast();
 
-  const fetchChats = async () => {
-    console.log(user.token);
+    // eslint-disable-next-line
+  const fetchGroups = async () => {
     try {
       const config = {
         headers: {
@@ -25,8 +24,8 @@ const MyChats = ({ fetchAgain }) => {
         },
       };
 
-      const { data } = await axios.get("/api/chat", config);
-      setChats(data);
+      const { data } = await axios.get(`/api/chat/group/get-groups/${selectedServer.server_id}`, config);
+      setGroups(data.groups);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -40,14 +39,33 @@ const MyChats = ({ fetchAgain }) => {
   };
 
   useEffect(() => {
-    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
-    // fetchChats();
+    if(selectedServer) fetchGroups();
     // eslint-disable-next-line
-  }, [fetchAgain]);
+  }, [fetchAgain, selectedServer]);
+
+  const handleRemoveGroup = async (groupId) => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const { data } = await axios.get("/api/chat/server/get-servers", config);
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Remove Server",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+    }
+  }
 
   return (
     <Box
-      d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
+      d={{ base: selectedServer ? "none" : "flex", md: "flex" }}
       flexDir="column"
       alignItems="center"
       p={3}
@@ -67,15 +85,17 @@ const MyChats = ({ fetchAgain }) => {
         alignItems="center"
       >
         Groups
-        <GroupChatModal>
-          <Button
-            className="add-group-btn"
-            d="flex"
-            fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-            rightIcon={<AddIcon />}
-          >
-          </Button>
-        </GroupChatModal>
+        {(selectedServer && myServers.some((s) => s.server_id === selectedServer.server_id)) &&
+          <GroupChatModal>
+            <Button
+              className="add-group-btn"
+              d="flex"
+              fontSize={{ base: "17px", md: "10px", lg: "17px" }}
+              rightIcon={<AddIcon />}
+            >
+            </Button>
+          </GroupChatModal>
+        }
       </Box>
       <Box
         d="flex"
@@ -87,32 +107,29 @@ const MyChats = ({ fetchAgain }) => {
         borderRadius="lg"
         overflowY="hidden"
       >
-        {chats ? (
+        {groups ? (
           <Stack overflowY="scroll">
-            {chats.map((chat) => (
+            {groups.map((group) => (
               <Box
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => setSelectedGroup(group)}
                 cursor="pointer"
-                bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                color={selectedChat === chat ? "white" : "black"}
+                bg={selectedGroup === group ? "#38B2AC" : "#E8E8E8"}
+                color={selectedGroup === group ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
-                key={chat._id}
+                key={group.group_id}
+                className="flex justify-between items-center"
               >
                 <Text>
-                  {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
-                    : chat.chatName}
+                  {group.group_name}
                 </Text>
-                {chat.latestMessage && (
-                  <Text fontSize="xs">
-                    <b>{chat.latestMessage.sender.name} : </b>
-                    {chat.latestMessage.content.length > 50
-                      ? chat.latestMessage.content.substring(0, 51) + "..."
-                      : chat.latestMessage.content}
-                  </Text>
-                )}
+                {
+                  myServers.some((s) => s.server_id === selectedServer.server_id) &&
+                  <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.group_name)}>
+                    <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
+                  </ConfirmModal>
+                }
               </Box>
             ))}
           </Stack>

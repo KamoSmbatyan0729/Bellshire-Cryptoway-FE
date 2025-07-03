@@ -1,23 +1,23 @@
-import { AddIcon } from "@chakra-ui/icons";
+import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { getSender } from "../config/ChatLogics";
+import { useEffect } from "react";
 import ChatLoading from "./ChatLoading";
 import ServerChatModal from "./miscellaneous/ServerChatModal";
-import { Button } from "@chakra-ui/react";
+import ConfirmModal from "./miscellaneous/ConfirmModal";
+import { Button, IconButton } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
+import { IoMdExit } from "react-icons/io";
+
 
 const MyChats = ({ fetchAgain }) => {
-  const [loggedUser, setLoggedUser] = useState();
 
-  const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
+  const { selectedServer, setSelectedServer, user, myServers, setMyServers, joinedServers, setJoinedServers, setSelectedGroup } = ChatState();
 
   const toast = useToast();
 
-  const fetchChats = async () => {
-    console.log(user.token);
+  const fetchMyServer = async () => {
     try {
       const config = {
         headers: {
@@ -25,8 +25,9 @@ const MyChats = ({ fetchAgain }) => {
         },
       };
 
-      const { data } = await axios.get("/api/chat", config);
-      setChats(data);
+      const { data } = await axios.get("/api/chat/server/get-servers", config);
+      setMyServers(data.myserver);
+      setJoinedServers(data.joinedserver)
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -39,15 +40,60 @@ const MyChats = ({ fetchAgain }) => {
     }
   };
 
+  const handleRemoveServer = async (serverId) => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const { data } = await axios.get("/api/chat/server/get-servers", config);
+      setMyServers(data.myserver);
+      setJoinedServers(data.joinedserver)
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Remove Server",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+    }
+  }
+  
+  const handleLeaveServer = async (serverId) => {
+    try {
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const { data } = await axios.get("/api/chat/server/get-servers", config);
+      setMyServers(data.myserver);
+      setJoinedServers(data.joinedserver)
+    } catch (error) {
+      toast({
+        title: "Error Occured!",
+        description: "Failed to Remove Server",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+    }
+  }
+
   useEffect(() => {
-    setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
-    // fetchChats();
+    fetchMyServer();
     // eslint-disable-next-line
   }, [fetchAgain]);
 
   return (
     <Box
-      d={{ base: selectedChat ? "none" : "flex", md: "flex" }}
+      d={{ base: selectedServer ? "none" : "flex", md: "flex" }}
       flexDir="column"
       alignItems="center"
       p={3}
@@ -87,32 +133,58 @@ const MyChats = ({ fetchAgain }) => {
         borderRadius="lg"
         overflowY="hidden"
       >
-        {chats ? (
+        <Text className="!mb-3">
+          My Servers
+        </Text>
+        {myServers ? (
           <Stack overflowY="scroll">
-            {chats.map((chat) => (
+            {myServers.map((server) => (
               <Box
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => {setSelectedServer(server); setSelectedGroup(null)}}
                 cursor="pointer"
-                bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                color={selectedChat === chat ? "white" : "black"}
+                bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
+                color={selectedServer === server ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
-                key={chat._id}
+                className="flex justify-between items-center"
+                key={server.server_id}
               >
                 <Text>
-                  {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
-                    : chat.chatName}
+                  {server.server_name}
                 </Text>
-                {chat.latestMessage && (
-                  <Text fontSize="xs">
-                    <b>{chat.latestMessage.sender.name} : </b>
-                    {chat.latestMessage.content.length > 50
-                      ? chat.latestMessage.content.substring(0, 51) + "..."
-                      : chat.latestMessage.content}
-                  </Text>
-                )}
+                <ConfirmModal title={"Confirm Removal"} description="Are you sure you want to remove?" onConfirm={() => handleRemoveServer(server.server_id)}>
+                  <IconButton aria-label='Remove Server' colorScheme="red" icon={<DeleteIcon />} />
+                </ConfirmModal>
+              </Box>
+            ))}
+          </Stack>
+        ) : (
+          <ChatLoading />
+        )}
+        <Text className="!my-3">
+          Joined Servers
+        </Text>
+        {joinedServers ? (
+          <Stack overflowY="scroll">
+            {joinedServers.map((server) => (
+              <Box
+                onClick={() => {setSelectedServer(server); setSelectedGroup(null)}}
+                cursor="pointer"
+                bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
+                color={selectedServer === server ? "white" : "black"}
+                px={3}
+                py={2}
+                borderRadius="lg"
+                key={server.server_id}
+                className="flex justify-between items-center"
+              >
+                <Text>
+                  {server.server_name}
+                </Text>
+                <ConfirmModal title={"Leave Confirmation"} description="Are you sure you want to leave?" onConfirm={() => handleLeaveServer(server.server_id)}>
+                  <IconButton aria-label='Leave Server' colorScheme="red" icon={<IoMdExit size={20}/>} />
+                </ConfirmModal>                
               </Box>
             ))}
           </Stack>

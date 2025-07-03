@@ -33,8 +33,8 @@ const UserListItem = ({ handleFunction }) => {
       <Box>
         <Text>{user.name}</Text>
         <Text fontSize="xs">
-          <b>address : </b>
-          {user._id}
+          <b>Email : </b>
+          {user.email}
         </Text>
       </Box>
     </Box>
