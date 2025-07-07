@@ -28,12 +28,15 @@ import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
 import { ChatState } from "../../Context/ChatProvider";
 import ConfirmModal from "./ConfirmModal";
+import { SocketContext } from "../../Context/SocketContext";
+import {useContext} from "react";
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
+  const { socket } = useContext(SocketContext);
 
   const {
     setSelectedChat,
@@ -41,7 +44,8 @@ function SideDrawer() {
     notification,
     setNotification,
     setJoinedServers,
-    joinedServers
+    joinedServers,
+    setSelectedServer
   } = ChatState();
 
   const toast = useToast();
@@ -102,7 +106,9 @@ function SideDrawer() {
       };
       const { data } = await axios.post(`/api/chat/server/join`, { serverId }, config);
 
-      setJoinedServers(data.joinedServers);
+      setSelectedServer(data.server)
+      setJoinedServers(prev => [...prev, data.server]);
+      socket.emit("join server", data.server.server_id);
       setLoadingChat(false);
       onClose();
     } catch (error) {

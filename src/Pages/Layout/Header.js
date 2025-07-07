@@ -5,6 +5,10 @@ import useWallet from "../../Context/useWallet";
 import { useToast } from "@chakra-ui/react";
 import { useHistory } from "react-router-dom";
 import { ChatState } from "../../Context/ChatProvider";
+import { SocketContext } from "../../Context/SocketContext";
+import io from "socket.io-client";
+import {useContext} from "react";
+const ENDPOINT = process.env.REACT_APP_BACKEND_URL;
 
 export default function Header(){
     const [account, setAccount] = useState(null);
@@ -12,6 +16,7 @@ export default function Header(){
     const toast = useToast();
     const history = useHistory();
     const { setUser } = ChatState();
+        const { socket, setSocket } = useContext(SocketContext);
 
     useEffect(() => {
         setAccount(connectedAccount.account);
@@ -31,11 +36,18 @@ export default function Header(){
                     isClosable: true,
                     position: "bottom",
                 });
+                
+                if(!socket) {
+                    const newSocket = io(ENDPOINT, {
+                        auth: { token: response.userData.token },
+                    });
+                    setSocket(newSocket);
+                }
                 setUser(response.userData);
                 localStorage.setItem("userInfo", JSON.stringify(response.userData));
                 history.push("/chats");
             } catch (err) {
-                // alert(err.message);
+                alert(err.message);
             }
         }
     };

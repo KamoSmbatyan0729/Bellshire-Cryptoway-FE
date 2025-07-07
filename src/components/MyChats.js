@@ -8,10 +8,13 @@ import GroupChatModal from "./miscellaneous/GroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
 import ConfirmModal from "./miscellaneous/ConfirmModal";
 import { Button, IconButton } from "@chakra-ui/react";
+import { SocketContext } from "../Context/SocketContext";
+import {useContext} from "react";
 
 const MyChats = ({ fetchAgain }) => {
 
   const { selectedGroup, setSelectedGroup, user, selectedServer, setGroups, groups, myServers } = ChatState();
+  const { socket } = useContext(SocketContext);
 
   const toast = useToast();
 
@@ -43,24 +46,15 @@ const MyChats = ({ fetchAgain }) => {
     // eslint-disable-next-line
   }, [fetchAgain, selectedServer]);
 
+  useEffect(() => {
+    socket.on('delete group', (data) => {
+      setGroups(data);
+      setSelectedGroup(data[0])
+    })
+  })
+
   const handleRemoveGroup = async (groupId) => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.get("/api/chat/server/get-servers", config);
-    } catch (error) {
-      toast({
-        title: "Error Occured!",
-        description: "Failed to Remove Server",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom-left",
-      });
-    }
+    socket.emit('delete group', {groupId: groupId, serverId: selectedServer.server_id});
   }
 
   return (
@@ -126,7 +120,7 @@ const MyChats = ({ fetchAgain }) => {
                 </Text>
                 {
                   myServers.some((s) => s.server_id === selectedServer.server_id) &&
-                  <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.group_name)}>
+                  <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.group_id)}>
                     <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
                   </ConfirmModal>
                 }
