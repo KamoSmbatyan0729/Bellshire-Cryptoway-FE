@@ -19,7 +19,7 @@ const ScrollableChat = ({ messages, handleEdit, handleRemove }) => {
     <ScrollableFeed className="overflow-x-hidden">
       {messages &&
         messages.map((m, i) => (
-          <div key={m.message_id} className={(m.sender_wallet === user._id ? "justify-end" : "justify-start") + " flex"}>   
+          <div key={m.id} className={(m.sender_wallet === user._id ? "justify-end" : "justify-start") + " flex"}>   
             <div className="my-2">
               {
                 m.sender_wallet !== user._id &&                
@@ -51,7 +51,7 @@ const ScrollableChat = ({ messages, handleEdit, handleRemove }) => {
                       </MenuButton>
                       <MenuList>
                         <MenuItem onClick={() => handleEdit(m)}>Edit</MenuItem>
-                        <MenuItem onClick={() => handleRemove(m.message_id)}>Remove</MenuItem>
+                        <MenuItem onClick={() => handleRemove(m.id)}>Remove</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>

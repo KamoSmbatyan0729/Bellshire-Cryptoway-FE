@@ -152,7 +152,7 @@ function SideDrawer() {
               {!notification.length && "No New Messages"}
               {notification.map((notif) => (
                 <MenuItem
-                  key={notif.message_id}
+                  key={notif.id}
                   onClick={() => {
                     setSelectedChat(notif.chat);
                     setNotification(notification.filter((n) => n !== notif));
@@ -197,10 +197,10 @@ function SideDrawer() {
                 <ChatLoading />
               ) : (
                 searchResult?.map((server) => {
-                  if (!joinedServers.some((s) => s.server_id === server.server_id)) {
+                  if (!joinedServers.some((s) => s.id === server.id)) {
                     return (
                       <Box
-                        key={server.server_id}
+                        key={server.id}
                         cursor="pointer"
                         bg="#E8E8E8"
                         _hover={{
@@ -223,7 +223,7 @@ function SideDrawer() {
                         <ConfirmModal
                           title="Join Confirmation"
                           description="Are you sure you want to join?"
-                          onConfirm={() => handleJoinServer(server.server_id)}
+                          onConfirm={() => handleJoinServer(server.id)}
                         >
                           <IconButton aria-label="Join Server" colorScheme="red" icon={<LinkIcon />} />
                         </ConfirmModal>

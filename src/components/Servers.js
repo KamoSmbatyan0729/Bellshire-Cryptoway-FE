@@ -148,12 +148,12 @@ const MyChats = ({ fetchAgain }) => {
                 py={2}
                 borderRadius="lg"
                 className="flex justify-between items-center"
-                key={server.server_id}
+                key={server.id}
               >
                 <Text>
                   {server.server_name}
                 </Text>
-                <ConfirmModal title={"Confirm Removal"} description="Are you sure you want to remove?" onConfirm={() => handleRemoveServer(server.server_id)}>
+                <ConfirmModal title={"Confirm Removal"} description="Are you sure you want to remove?" onConfirm={() => handleRemoveServer(server.id)}>
                   <IconButton aria-label='Remove Server' colorScheme="red" icon={<DeleteIcon />} />
                 </ConfirmModal>
               </Box>
@@ -176,13 +176,13 @@ const MyChats = ({ fetchAgain }) => {
                 px={3}
                 py={2}
                 borderRadius="lg"
-                key={server.server_id}
+                key={server.id}
                 className="flex justify-between items-center"
               >
                 <Text>
                   {server.server_name}
                 </Text>
-                <ConfirmModal title={"Leave Confirmation"} description="Are you sure you want to leave?" onConfirm={() => handleLeaveServer(server.server_id)}>
+                <ConfirmModal title={"Leave Confirmation"} description="Are you sure you want to leave?" onConfirm={() => handleLeaveServer(server.id)}>
                   <IconButton aria-label='Leave Server' colorScheme="red" icon={<IoMdExit size={20}/>} />
                 </ConfirmModal>                
               </Box>

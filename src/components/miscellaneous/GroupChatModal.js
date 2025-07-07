@@ -45,7 +45,7 @@ const GroupChatModal = ({ children }) => {
         `/api/chat/group/create`,
         {
           groupName: groupChatName,
-          serverId: selectedServer.server_id
+          serverId: selectedServer.id
         },
         config
       );

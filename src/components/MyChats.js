@@ -24,7 +24,7 @@ const MyChats = ({ fetchAgain }) => {
         },
       };
 
-      const { data } = await axios.get(`/api/chat/group/get-groups/${selectedServer.server_id}`, config);
+      const { data } = await axios.get(`/api/chat/group/get-groups/${selectedServer.id}`, config);
       setGroups(data.groups);
     } catch (error) {
       toast({
@@ -85,7 +85,7 @@ const MyChats = ({ fetchAgain }) => {
         alignItems="center"
       >
         Groups
-        {(selectedServer && myServers.some((s) => s.server_id === selectedServer.server_id)) &&
+        {(selectedServer && myServers.some((s) => s.id === selectedServer.id)) &&
           <GroupChatModal>
             <Button
               className="add-group-btn"
@@ -125,7 +125,7 @@ const MyChats = ({ fetchAgain }) => {
                   {group.group_name}
                 </Text>
                 {
-                  myServers.some((s) => s.server_id === selectedServer.server_id) &&
+                  myServers.some((s) => s.id === selectedServer.id) &&
                   <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.group_name)}>
                     <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
                   </ConfirmModal>

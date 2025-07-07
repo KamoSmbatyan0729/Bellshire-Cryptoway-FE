@@ -34,22 +34,28 @@ export default function Landingpage() {
     useEffect(() => {
         setAccount(connectedAccount.account);
     }, [connectedAccount])
-    
+
     const handleConnect = async () => {
-        if(account){
+        if (account) {
             const config = {
                 headers: {
-                "Content-type": "application/json",
+                    "Content-type": "application/json",
                 },
             };
 
-            const { data } = await axios.post(
-                "/api/user/login",
-                { wallet_address: account},
-                config
-            );
-            localStorage.setItem("userInfo", JSON.stringify(data));
-            history.push("/chats");
+            try {
+                const response = await axios.post(
+                    "/api/user/login",
+                    { wallet_address: account },
+                    config
+                )
+                    console.log(response.data)
+                localStorage.setItem("userInfo", JSON.stringify(response.data));
+                history.push("/chats");
+
+            } catch (error) {
+                console.error('Login error:', error);
+            }
         } else {
             try {
                 const response = await connectWallet();
@@ -73,9 +79,9 @@ export default function Landingpage() {
         <LandingLayout>
             <Box className="h-full p-10">
                 <Container maxW={"5xl"}>
-                    <Image src="./assets/images/logo.svg" className="block mx-auto w-20"/>
+                    <Image src="./assets/images/logo.svg" className="block mx-auto w-20" />
                     <p className="text-center !my-20">Bellshire Chat System</p>
-                    <Grid templateColumns={{ base: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }}  gap="6">
+                    <Grid templateColumns={{ base: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }} gap="6">
                         {
                             advantageTexts.map((text, index) => {
                                 return (

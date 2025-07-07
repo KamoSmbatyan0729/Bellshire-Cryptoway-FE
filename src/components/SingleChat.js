@@ -58,13 +58,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setLoading(true);
 
       const { data } = await axios.get(
-        `/api/message/get-messages/${selectedGroup.group_id}`,
+        `/api/message/get-messages/${selectedGroup.id}`,
         config
       );
       setMessages(data.messages);
       setLoading(false);
 
-      socket.emit("join group", selectedGroup.group_id);
+      socket.emit("join group", selectedGroup.id);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -81,7 +81,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (event.key === "Enter" && newMessage) {
       if(editMode){
         try {
-          socket.emit("edit message", {groupId: selectedGroup.group_id, messageId: editMessage.message_id, newContent: newMessage});
+          socket.emit("edit message", {groupId: selectedGroup.id, messageId: editMessage.id, newContent: newMessage});
           setEditMode(false)
           setEditMessage(null);
           setNewMessage("");
@@ -97,10 +97,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           });
         }
       }
-      socket.emit("stop typing", selectedGroup.group_id);
+      socket.emit("stop typing", selectedGroup.id);
       try {
         setNewMessage("");
-        socket.emit("new message", {content: newMessage, groupId: selectedGroup.group_id});
+        socket.emit("new message", {content: newMessage, groupId: selectedGroup.id});
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -119,9 +119,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       auth: { token: user.token },
     });
     socket.emit("setup", user);
-    socket.on("connected", () => setSocketConnected(true));
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
+    // socket.on("connected", () => setSocketConnected(true));
+    // socket.on("typing", () => setIsTyping(true));
+    // socket.on("stop typing", () => setIsTyping(false));
     
 
     // eslint-disable-next-line
@@ -131,9 +131,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.on("message received", (newMessageRecieved) => {
       if (
         !selectedChatCompare || // if chat is not selected or doesn't match current chat
-        selectedChatCompare.group_id !== newMessageRecieved[0].group_id
+        selectedChatCompare.id !== newMessageRecieved[0].id
       ) { 
-        if (!notification.some((n) => newMessageRecieved[0].message_id === n.message_id)) {
+        if (!notification.some((n) => newMessageRecieved[0].id === n.id)) {
           setNotification([...notification, newMessageRecieved[0] ].slice(0, 10));
           setFetchAgain(!fetchAgain);
         }
@@ -143,14 +143,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     });
     socket.on("delete message", (messageId) => {
       const filteredMessages = messages.filter(
-        (msg) => msg.message_id !== messageId
+        (msg) => msg.id !== messageId
       );
       setMessages(filteredMessages);
 
     })
     socket.on("edit", (message) => {  
       const updatedMessages = messages.map((msg) =>
-        msg.message_id === message[0].message_id ? message[0] : msg
+        msg.id === message[0].id ? message[0] : msg
       );
       setMessages(updatedMessages);
     })
@@ -168,7 +168,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (!socketConnected) return;
     if (e.target.value.trim() === "") {
       if (typing) {
-        socket.emit("stop typing", selectedGroup.group_id);
+        socket.emit("stop typing", selectedGroup.id);
         setTyping(false);
       }
       return;
@@ -176,7 +176,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     if (!typing) {
       setTyping(true);
-      socket.emit("typing", selectedGroup.group_id);
+      socket.emit("typing", selectedGroup.id);
     }
 
     lastTypingTimeRef.current = new Date().getTime();
@@ -190,7 +190,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const timeDiff = timeNow - lastTypingTimeRef.current;
 
       if (timeDiff >= 3000 && typing) {
-        socket.emit("stop typing", selectedGroup.group_id);
+        socket.emit("stop typing", selectedGroup.id);
         setTyping(false);
       }
     }, 3000);
@@ -202,7 +202,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     inputRef.current?.focus();
   }
   function handleRemove(messageId){
-    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.group_id});
+    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.id});
 
   }
   function handleCloseEditMode(){
