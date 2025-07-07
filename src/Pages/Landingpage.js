@@ -8,6 +8,10 @@ import { useHistory } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
 import axios from "axios";
+import { SocketContext } from "../Context/SocketContext";
+import io from "socket.io-client";
+import {useContext} from "react";
+const ENDPOINT = process.env.REACT_APP_BACKEND_URL;
 
 const advantageTexts = [
     "Chat with your wallet address.",
@@ -30,6 +34,7 @@ export default function Landingpage() {
     const history = useHistory();
     const toast = useToast();
     const { setUser } = ChatState();
+    const { socket, setSocket } = useContext(SocketContext);
 
     useEffect(() => {
         setAccount(connectedAccount.account);
@@ -43,19 +48,20 @@ export default function Landingpage() {
                 },
             };
 
-            try {
-                const response = await axios.post(
-                    "/api/user/login",
-                    { wallet_address: account },
-                    config
-                )
-                    console.log(response.data)
-                localStorage.setItem("userInfo", JSON.stringify(response.data));
-                history.push("/chats");
 
-            } catch (error) {
-                console.error('Login error:', error);
+            const { data } = await axios.post(
+                "/api/user/login",
+                { wallet_address: account},
+                config
+            );
+            if(!socket) {
+                const newSocket = io(ENDPOINT, {
+                    auth: { token: data.token },
+                });
+                setSocket(newSocket);
             }
+            localStorage.setItem("userInfo", JSON.stringify(data));
+            history.push("/chats");
         } else {
             try {
                 const response = await connectWallet();

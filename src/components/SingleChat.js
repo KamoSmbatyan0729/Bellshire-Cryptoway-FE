@@ -2,22 +2,25 @@ import { FormControl } from "@chakra-ui/form-control";
 import { Input } from "@chakra-ui/input";
 import { Box, Text } from "@chakra-ui/layout";
 import "./styles.css";
-import { IconButton, Spinner, useToast } from "@chakra-ui/react";
+import { Spinner, useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ArrowBackIcon } from "@chakra-ui/icons";
 import ScrollableChat from "./ScrollableChat";
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
 import { useRef } from "react";
-import io from "socket.io-client";
 import { ChatState } from "../Context/ChatProvider";
 import { MdEdit } from "react-icons/md";
 import { MdOutlineClose } from "react-icons/md";
 import EmojiPicker from 'emoji-picker-react';
 import { MdEmojiEmotions } from "react-icons/md";
-const ENDPOINT = process.env.REACT_APP_BACKEND_URL;
-var socket, selectedChatCompare;
+import { SocketContext } from "../Context/SocketContext";
+import { useContext, useCallback } from "react";
+import { useDropzone } from 'react-dropzone'
+import { FaRegFile } from "react-icons/fa";
+import { DeleteIcon } from "@chakra-ui/icons";
+import { IconButton } from "@chakra-ui/react";
+var selectedChatCompare;
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
@@ -33,6 +36,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [editMode, setEditMode] = useState(false);
   const [editMessage, setEditMessage] = useState(null);
   const [clickEmoji, setClickEmoji] = useState(false);
+  const { socket } = useContext(SocketContext);
+  const [fileAttach, setFileAttach] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const onDrop = useCallback(acceptedFiles => {
+    setAttachedFiles((prev) => [...prev, ...acceptedFiles]);
+    setFileAttach(true);
+    inputRef.current?.focus();
+  }, [setFileAttach, setAttachedFiles])
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop})  
+  const [fileUpload, setFileUpload] = useState(false);
 
   const defaultOptions = {
     loop: true,
@@ -42,7 +55,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-  const { selectedGroup, setSelectedGroup, user, notification, setNotification } =
+  const { selectedGroup, user, notification, setNotification, selectedServer } =
     ChatState();
 
   const fetchMessages = async () => {
@@ -63,8 +76,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       setMessages(data.messages);
       setLoading(false);
-
       socket.emit("join group", selectedGroup.id);
+
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -78,10 +91,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   const sendMessage = async (event) => {
-    if (event.key === "Enter" && newMessage) {
+    if (event.key === "Enter" && (newMessage || attachedFiles.length > 0)) {
       if(editMode){
         try {
-          socket.emit("edit message", {groupId: selectedGroup.id, messageId: editMessage.id, newContent: newMessage});
+          socket.emit("edit message", {groupId: selectedGroup.id, messageId: editMessage.id, newContent: newMessage, serverId: selectedServer.id});
           setEditMode(false)
           setEditMessage(null);
           setNewMessage("");
@@ -95,12 +108,34 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             isClosable: true,
             position: "bottom",
           });
+          return ;
         }
       }
-      socket.emit("stop typing", selectedGroup.id);
+
+      socket.emit("stop typing", selectedServer.id);
       try {
         setNewMessage("");
-        socket.emit("new message", {content: newMessage, groupId: selectedGroup.id});
+        let messageId = null;
+        if (attachedFiles.length !== 0){
+          const formData = new FormData();
+          attachedFiles.forEach((file) => {
+            formData.append("files", file);
+          });
+          formData.append("groupId", selectedGroup.id);
+          const config = {
+            headers: {
+              Authorization: `Bearer ${user.token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          };
+          setFileUpload(true);
+          const response = await axios.post("/api/upload", formData, config);
+          setFileUpload(false);
+          setAttachedFiles([])
+          setFileAttach(false)
+          messageId = response.messageId;
+        }
+        socket.emit("new message", {content: newMessage, groupId: selectedGroup.id, serverId: selectedServer.id, messageId: messageId});
       } catch (error) {
         toast({
           title: "Error Occured!",
@@ -115,9 +150,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   useEffect(() => {
-    socket = io(ENDPOINT, {
-      auth: { token: user.token },
-    });
     socket.emit("setup", user);
     // socket.on("connected", () => setSocketConnected(true));
     // socket.on("typing", () => setIsTyping(true));
@@ -125,20 +157,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     
 
     // eslint-disable-next-line
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     socket.on("message received", (newMessageRecieved) => {
       if (
         !selectedChatCompare || // if chat is not selected or doesn't match current chat
-        selectedChatCompare.id !== newMessageRecieved[0].id
+
+        selectedChatCompare.id !== newMessageRecieved.id
       ) { 
-        if (!notification.some((n) => newMessageRecieved[0].id === n.id)) {
-          setNotification([...notification, newMessageRecieved[0] ].slice(0, 10));
+        if (!notification.some((n) => newMessageRecieved.id === n.id)) {
+          setNotification([...notification, newMessageRecieved ].slice(0, 10));
           setFetchAgain(!fetchAgain);
         }
       } else {
-        setMessages([...messages, newMessageRecieved[0]]);
+        setMessages([...messages, newMessageRecieved]);
       }
     });
     socket.on("delete message", (messageId) => {
@@ -148,9 +181,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setMessages(filteredMessages);
 
     })
-    socket.on("edit", (message) => {  
+    socket.on("edit message", (message) => {  
       const updatedMessages = messages.map((msg) =>
-        msg.id === message[0].id ? message[0] : msg
+        msg.id === message.id ? message : msg
       );
       setMessages(updatedMessages);
     })
@@ -168,7 +201,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (!socketConnected) return;
     if (e.target.value.trim() === "") {
       if (typing) {
-        socket.emit("stop typing", selectedGroup.id);
+        socket.emit("stop typing", selectedServer.id);
         setTyping(false);
       }
       return;
@@ -176,7 +209,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     if (!typing) {
       setTyping(true);
-      socket.emit("typing", selectedGroup.id);
+      socket.emit("typing", selectedServer.id);
     }
 
     lastTypingTimeRef.current = new Date().getTime();
@@ -190,7 +223,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const timeDiff = timeNow - lastTypingTimeRef.current;
 
       if (timeDiff >= 3000 && typing) {
-        socket.emit("stop typing", selectedGroup.id);
+        socket.emit("stop typing", selectedServer.id);
         setTyping(false);
       }
     }, 3000);
@@ -202,52 +235,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     inputRef.current?.focus();
   }
   function handleRemove(messageId){
-    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.id});
-
+    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.id, serverId: selectedServer.id});
   }
   function handleCloseEditMode(){
     setEditMode(false)
     setEditMessage(null);
     setNewMessage('')
   }
+  function handleCloseAttachMode(){
+    setFileAttach(false)
+    setAttachedFiles([]);
+  }
+  function onClickEmoji(e){
+    setNewMessage(prev => prev + e.emoji);
+    setClickEmoji(false);
+  }
+  const handleRemoveFile = (fileToRemove) => {
+    setAttachedFiles((prev) => {
+      const updated = prev.filter((file) => file !== fileToRemove);
+
+      if (updated.length === 0) {
+        setFileAttach(false);
+      }
+
+      return updated;
+    });
+  };
   return (
     <>
       {selectedGroup ? (
-        <>
-          <Text
-            fontSize={{ base: "28px", md: "30px" }}
-            pb={3}
-            px={2}
-            w="100%"
-            fontFamily="Work sans"
-            d="flex"
-            justifyContent={{ base: "space-between" }}
-            alignItems="center"
-          >
-            <IconButton
-              d={{ base: "flex", md: "none" }}
-              icon={<ArrowBackIcon />}
-              onClick={() => setSelectedGroup("")}
-            />
-            {/* {messages &&
-              (!selectedGroup.isGroupChat ? (
-                <>
-                  {getSender(user, selectedGroup.users)}
-                  <ProfileModal
-                    user={getSenderFull(user, selectedGroup.users)}
-                  />
-                </>
-              ) : (
-                <>
-                  {selectedGroup.chatName.toUpperCase()}
-                  <UpdateGroupChatModal
-                    fetchMessages={fetchMessages}
-                    fetchAgain={fetchAgain}
-                    setFetchAgain={setFetchAgain}
-                  />
-                </>
-              ))} */}
-          </Text>
+        <Box className="w-full h-full relative" {...getRootProps()}>
           <Box
             d="flex"
             flexDir="column"
@@ -258,7 +275,26 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             h="100%"
             borderRadius="lg"
             overflowY="hidden"
-          >
+            className="relative"
+          > 
+            {
+              isDragActive &&
+              <div className={
+                    "absolute top-0 left-0 w-full h-full bg-black transition-opacity duration-300 z-100 " +
+                    (isDragActive ? "opacity-80" : "opacity-0")
+                  }
+              >
+                <input {...getInputProps()} />
+                <div className="w-full h-full flex items-center justify-center text-white text-lg">
+                  <div className="rounded-xl bg-[#5864F2] text-white p-3 text-center">
+                    <div className="rounded-xl border-white p-5 m-2 border-dashed">
+                      <p className="text-2xl font-bold">Upload To {selectedGroup.group_name}</p>
+                      <p>you can add comments before uploading.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
             {loading ? (
               <Spinner
                 size="xl"
@@ -307,6 +343,39 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   </div>
                 </div>
               }
+              {
+                (fileAttach && attachedFiles.length > 0) &&
+                <div className="flex items-center justify-between p-3 bg-[#e0e0e0] relative">
+                  {
+                    fileUpload &&
+                    <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-black opacity-70 z-100">
+                        <Spinner
+                          thickness='4px'
+                          speed='0.65s'
+                          emptyColor='gray.200'
+                          color='blue.500'
+                          size='xl'
+                        />
+                    </div>
+                  }
+                  <div className="flex items-center">
+                    {
+                      attachedFiles.map((file) => {
+                        return <div className="flex items-center">
+                          <div className="rounded-lg p-20 flex justify-center items-center relative bg-gray-400 me-3">
+                            <FaRegFile size={30} />
+                            <IconButton className="!absolute top-2 right-2" size="xs" aria-label='Remove File' colorScheme="red" icon={<DeleteIcon size={10}/>} onClick={() => handleRemoveFile(file)}/>
+                            <p className="absolute bottom-2 left-2 text-xs">{file.name}</p>
+                          </div>
+                        </div>
+                      })
+                    }
+                  </div>
+                  <div>
+                    <MdOutlineClose className="cursor-pointer" onClick={handleCloseAttachMode}/>
+                  </div>
+                </div>
+              }
               <Input
                 variant="filled"
                 bg="#E0E0E0"
@@ -314,6 +383,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 value={newMessage}
                 onChange={typingHandler}
                 ref={inputRef}
+                disabled={fileUpload}
               />
               <div className="absolute right-5 bottom-[6px] cursor-pointer" onClick={() => {setClickEmoji(!clickEmoji)}}>
                 <MdEmojiEmotions size={30}/>
@@ -321,12 +391,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               {
                 clickEmoji &&
                 <div className="absolute right-0 bottom-[105%]">
-                  <EmojiPicker />
+                  <EmojiPicker onEmojiClick={onClickEmoji}/>
                 </div>
               }
             </FormControl>
           </Box>
-        </>
+        </Box>
       ) : (
         // to get socket.io on same page
         <Box d="flex" alignItems="center" justifyContent="center" h="100%">

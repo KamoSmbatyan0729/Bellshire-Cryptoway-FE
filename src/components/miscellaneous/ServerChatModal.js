@@ -15,13 +15,16 @@ import {
 import axios from "axios";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
+import { SocketContext } from "../../Context/SocketContext";
+import {useContext} from "react";
 
 const ServerChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
+  const { socket } = useContext(SocketContext);
 
-  const { user, setMyServers } = ChatState();
+  const { user, setMyServers, setSelectedServer } = ChatState();
 
   const handleSubmit = async () => {
     if (!groupChatName) {
@@ -48,7 +51,9 @@ const ServerChatModal = ({ children }) => {
         },
         config
       );
-      setMyServers(data.myserver);
+      setSelectedServer(data.server)
+      setMyServers(prev => [...prev, data.server]);
+      socket.emit("join server", data.server.id);
       onClose();
       toast({
         title: "New Server Created!",

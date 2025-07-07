@@ -9,11 +9,15 @@ import ConfirmModal from "./miscellaneous/ConfirmModal";
 import { Button, IconButton } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
 import { IoMdExit } from "react-icons/io";
+import { SocketContext } from "../Context/SocketContext";
+import {useContext} from "react";
+
 
 
 const MyChats = ({ fetchAgain }) => {
 
   const { selectedServer, setSelectedServer, user, myServers, setMyServers, joinedServers, setJoinedServers, setSelectedGroup } = ChatState();
+  const { socket } = useContext(SocketContext);
 
   const toast = useToast();
 
@@ -40,56 +44,35 @@ const MyChats = ({ fetchAgain }) => {
     }
   };
 
-  const handleRemoveServer = async (serverId) => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const { data } = await axios.get("/api/chat/server/get-servers", config);
-      setMyServers(data.myserver);
-      setJoinedServers(data.joinedserver)
-    } catch (error) {
-      toast({
-        title: "Error Occured!",
-        description: "Failed to Remove Server",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom-left",
-      });
-    }
+  const handleRemoveServer = async (serverId) => {    
+    socket.emit('delete server', {serverId: serverId});
   }
+
+  useEffect(() => {
+    socket.on('delete server', (data) => {
+      setMyServers(data);
+      setSelectedServer(null)
+    })
+    socket.on("leave server", (data) => {
+      setJoinedServers(data);
+      setSelectedServer(null);
+    })
+  })
   
   const handleLeaveServer = async (serverId) => {
-    try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const { data } = await axios.get("/api/chat/server/get-servers", config);
-      setMyServers(data.myserver);
-      setJoinedServers(data.joinedserver)
-    } catch (error) {
-      toast({
-        title: "Error Occured!",
-        description: "Failed to Remove Server",
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-        position: "bottom-left",
-      });
-    }
+    socket.emit('leave server', {serverId: serverId});
   }
 
   useEffect(() => {
     fetchMyServer();
     // eslint-disable-next-line
   }, [fetchAgain]);
+
+  function handleClickServer(server){
+    setSelectedServer(server);
+    setSelectedGroup(null)
+    socket.emit("join server", server.id)
+  }
 
   return (
     <Box
@@ -140,7 +123,7 @@ const MyChats = ({ fetchAgain }) => {
           <Stack overflowY="scroll">
             {myServers.map((server) => (
               <Box
-                onClick={() => {setSelectedServer(server); setSelectedGroup(null)}}
+                onClick={() => handleClickServer(server)}
                 cursor="pointer"
                 bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
                 color={selectedServer === server ? "white" : "black"}
@@ -169,7 +152,7 @@ const MyChats = ({ fetchAgain }) => {
           <Stack overflowY="scroll">
             {joinedServers.map((server) => (
               <Box
-                onClick={() => {setSelectedServer(server); setSelectedGroup(null)}}
+                onClick={() => handleClickServer(server)}
                 cursor="pointer"
                 bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
                 color={selectedServer === server ? "white" : "black"}

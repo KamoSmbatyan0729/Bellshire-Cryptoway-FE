@@ -14,7 +14,6 @@ export async function connectWallet() {
         { wallet_address: accounts[0]},
         config
       );
-      console.log(data);
       return {userData: data, account: accounts[0]};
     } catch (error) {
       throw new Error("User rejected connection");
