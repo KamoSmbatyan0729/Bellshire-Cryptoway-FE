@@ -32,7 +32,6 @@ const ServerChatModal = ({ children }) => {
   const callReadServerCreationFee = async () => {
     try {
       const result = await contract.owner();
-      console.log(result)
       setServerCreationFee(result.toString());
     } catch (error) {
       console.error("Read error:", error);
@@ -42,6 +41,7 @@ const ServerChatModal = ({ children }) => {
   useEffect(() => {
     callReadServerCreationFee()
   }, [])
+  console.log(serverCreationFee);
 
   const handleSubmit = async () => {
     if (!groupChatName) {
