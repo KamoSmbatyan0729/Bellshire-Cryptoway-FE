@@ -11,20 +11,37 @@ import {
   FormControl,
   Input,
   useToast,
+  Text
 } from "@chakra-ui/react";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import { SocketContext } from "../../Context/SocketContext";
 import {useContext} from "react";
+import contract from "../../Contract/contract";
 
 const ServerChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
   const { socket } = useContext(SocketContext);
+  const [serverCreationFee, setServerCreationFee] = useState(null);
 
   const { user, setMyServers, setSelectedServer } = ChatState();
+
+  const callReadServerCreationFee = async () => {
+    try {
+      const result = await contract.owner();
+      console.log(result)
+      setServerCreationFee(result.toString());
+    } catch (error) {
+      console.error("Read error:", error);
+    }
+  };
+
+  useEffect(() => {
+    callReadServerCreationFee()
+  }, [])
 
   const handleSubmit = async () => {
     if (!groupChatName) {
@@ -97,6 +114,14 @@ const ServerChatModal = ({ children }) => {
                 mb={3}
                 onChange={(e) => setGroupChatName(e.target.value)}
               />
+            </FormControl>
+            <FormControl>
+              <Input
+                placeholder="Join Fee"
+                mb={3}
+                onChange={(e) => setGroupChatName(e.target.value)}
+              />
+              <Text>Server creation fee is 1 hype</Text>
             </FormControl>
           </ModalBody>
           <ModalFooter>

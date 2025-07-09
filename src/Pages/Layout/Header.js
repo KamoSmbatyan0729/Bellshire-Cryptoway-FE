@@ -24,7 +24,7 @@ export default function Header(){
 
     const handleConnect = async () => {
         if(account){
-            navigator.clipboard.writeText(account);
+            history.push("/chats");
         } else {
             try {
                 const response = await connectWallet();

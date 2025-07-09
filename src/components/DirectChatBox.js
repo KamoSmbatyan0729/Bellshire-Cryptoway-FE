@@ -5,7 +5,7 @@ import "./styles.css";
 import { Spinner, useToast } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ScrollableChat from "./ScrollableChat";
+import ScrollableDMChat from "./ScrollableChat";
 import Lottie from "react-lottie";
 import animationData from "../animations/typing.json";
 import { useRef } from "react";
@@ -56,11 +56,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       preserveAspectRatio: "xMidYMid slice",
     },
   };
-  const { selectedGroup, user, notification, setNotification, selectedServer } =
+  const { selectedContact, user, notification, setNotification } =
     ChatState();
 
   const fetchMessages = async () => {
-    if (!selectedGroup) return;
+    if (!selectedContact) return;
 
     try {
       const config = {
@@ -72,7 +72,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setLoading(true);
 
       const { data } = await axios.get(
-        `/api/message/get-messages/${selectedGroup.id}`,
+        `/api/chat/dm/getMessages/${selectedContact.wallet_address}/${selectedContact.contact_wallet}`,
         config
       );
       setMessages(data.messages);
@@ -107,7 +107,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (event.key === "Enter" && (newMessage || attachedFiles.length > 0)) {
       if(editMode){
         try {
-          socket.emit("edit message", {groupId: selectedGroup.id, messageId: editMessage.id, newContent: newMessage, serverId: selectedServer.id});
+          socket.emit("edit dm message", {contact: selectedContact, messageId: editMessage.id, newContent: newMessage});
           setEditMode(false)
           setEditMessage(null);
           setNewMessage("");
@@ -125,7 +125,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         }
       }
 
-      socket.emit("stop typing", selectedServer.id);
+      socket.emit("stop dm typing", {contact: selectedContact});
       try {
         setNewMessage("");
         if (attachedFiles.length !== 0){
@@ -134,7 +134,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           attachedFiles.forEach((file) => {
             formData.append("files", file);
           });
-          formData.append("groupId", selectedGroup.id);
+          formData.append("wallet_address", selectedContact.wallet_address);
+          formData.append("contact_wallet", selectedContact.contact_wallet);
           const config = {
             headers: {
               Authorization: `Bearer ${user.token}`,
@@ -142,14 +143,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             },
           };
           setFileUpload(true);
-          const response = await axios.post("/api/upload", formData, config);
+          const response = await axios.post("/api/dm-upload", formData, config);
           setFileUpload(false);
           setAttachedFiles([])
           setFileAttach(false)
           messageId = response.data.messageId;
-          socket.emit("new message", {content: newMessage, groupId: selectedGroup.id, serverId: selectedServer.id, messageId: messageId});
+          socket.emit("new dm message", {content: newMessage, contact: selectedContact, messageId: messageId});
         } else {
-          socket.emit("new message", {content: newMessage, groupId: selectedGroup.id, serverId: selectedServer.id});
+          socket.emit("new dm message", {content: newMessage, contact: selectedContact});
         }
       } catch (error) {
         toast({
@@ -165,21 +166,32 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   useEffect(() => {
-    socket.emit("setup", user);
-    socket.on("connected", () => setSocketConnected(true));
-    socket.on("typing", () => setIsTyping(true));
-    socket.on("stop typing", () => setIsTyping(false));
-    
+    if (!socket) return;
 
-    // eslint-disable-next-line
-  }, [socket]);
+    socket.emit("dm setup", user);
+
+    const handleConnect = () => setSocketConnected(true);
+    const handleTyping = () => setIsTyping(true);
+    const handleStopTyping = () => setIsTyping(false);
+
+    socket.on("dm connected", handleConnect);
+    socket.on("dm typing", handleTyping);
+    socket.on("stop dm typing", handleStopTyping);
+
+    return () => {
+      socket.off("dm connected", handleConnect);
+      socket.off("dm typing", handleTyping);
+      socket.off("stop dm typing", handleStopTyping);
+    };
+  }, [socket, user]);
+
 
   useEffect(() => {
-    socket.on("message received", (newMessageRecieved) => {
+    socket.on("message dm received", (newMessageRecieved) => {
       if (
         !selectedChatCompare || // if chat is not selected or doesn't match current chat
 
-        selectedChatCompare.id !== newMessageRecieved.group_id
+        selectedChatCompare.id !== newMessageRecieved.contact_id
       ) { 
         if (!notification.some((n) => newMessageRecieved.id === n.id)) {
           setNotification([...notification, newMessageRecieved ].slice(0, 10));
@@ -189,14 +201,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         setMessages([...messages, newMessageRecieved]);
       }
     });
-    socket.on("delete message", (messageId) => {
+    socket.on("delete dm message", (messageId) => {
       const filteredMessages = messages.filter(
         (msg) => msg.id !== messageId
       );
       setMessages(filteredMessages);
 
     })
-    socket.on("edit message", (message) => {  
+    socket.on("edit dm message", (message) => {  
       const updatedMessages = messages.map((msg) =>
         msg.id === message.id ? message : msg
       );
@@ -207,16 +219,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   useEffect(() => {
     fetchMessages();
 
-    selectedChatCompare = selectedGroup;
+    selectedChatCompare = selectedContact;
     // eslint-disable-next-line
-  }, [selectedGroup]);
+  }, [selectedContact]);
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
     if (!socketConnected) return;
     if (e.target.value.trim() === "") {
       if (typing) {
-        socket.emit("stop typing", selectedServer.id);
+        socket.emit("stop dm typing", {contact: selectedContact});
         setTyping(false);
       }
       return;
@@ -224,7 +236,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     if (!typing) {
       setTyping(true);
-      socket.emit("typing", selectedServer.id);
+      socket.emit("dm typing", {contact: selectedContact});
     }
 
     lastTypingTimeRef.current = new Date().getTime();
@@ -238,7 +250,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       const timeDiff = timeNow - lastTypingTimeRef.current;
 
       if (timeDiff >= 3000 && typing) {
-        socket.emit("stop typing", selectedServer.id);
+        socket.emit("stop dm typing", {contact: selectedContact});
         setTyping(false);
       }
     }, 3000);
@@ -250,7 +262,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     inputRef.current?.focus();
   }
   function handleRemove(messageId){
-    socket.emit("delete message", {messageId: messageId, groupId: selectedGroup.id, serverId: selectedServer.id});
+    socket.emit("delete dm message", {messageId: messageId, contact: selectedContact});
   }
   function handleCloseEditMode(){
     setEditMode(false)
@@ -276,9 +288,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       return updated;
     });
   };
+  let contactAddress
+  if(selectedContact){
+    contactAddress = selectedContact.contact_address === user._id ? selectedContact.contact_address : selectedContact.sender_address;
+  }
   return (
     <>
-      {selectedGroup ? (
+      {selectedContact ? (
         <Box className="w-full h-full relative" {...getRootProps()}>
           <Box
             d="flex"
@@ -303,7 +319,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 <div className="w-full h-full flex items-center justify-center text-white text-lg">
                   <div className="rounded-xl bg-[#5864F2] text-white p-3 text-center">
                     <div className="rounded-xl border-white p-5 m-2 border-dashed">
-                      <p className="text-2xl font-bold">Upload To {selectedGroup.group_name}</p>
+                      <p className="text-2xl font-bold">Upload To {contactAddress}</p>
                       <p>you can add comments before uploading.</p>
                     </div>
                   </div>
@@ -320,7 +336,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               />
             ) : (
               <div className="messages">
-                <ScrollableChat messages={messages} handleEdit={handleEdit} handleRemove={handleRemove}/>
+                <ScrollableDMChat messages={messages} handleEdit={handleEdit} handleRemove={handleRemove}/>
               </div>
             )}
 
@@ -416,7 +432,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         // to get socket.io on same page
         <Box d="flex" alignItems="center" justifyContent="center" h="100%">
           <Text fontSize="3xl" pb={3} fontFamily="Work sans">
-            Click on a group to start chatting
+            Click on a contact to start chatting
           </Text>
         </Box>
       )}

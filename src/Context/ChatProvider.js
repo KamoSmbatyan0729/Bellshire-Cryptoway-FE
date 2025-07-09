@@ -13,6 +13,9 @@ const ChatProvider = ({ children }) => {
   const [joinedServers, setJoinedServers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState();
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState();
+  const [selectContact, setSelectContact] = useState(false);
 
   const history = useHistory();
 
@@ -46,7 +49,13 @@ const ChatProvider = ({ children }) => {
         selectedServer,
         setSelectedServer,
         selectedGroup,
-        setSelectedGroup
+        setSelectedGroup,
+        contacts,
+        setContacts,
+        selectedContact,
+        setSelectedContact,
+        selectContact,
+        setSelectContact
       }}
     >
       {children}

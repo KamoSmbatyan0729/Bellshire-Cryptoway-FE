@@ -1,25 +1,23 @@
-import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
+import { DeleteIcon } from "@chakra-ui/icons";
 import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
 import axios from "axios";
 import { useEffect } from "react";
-import ChatLoading from "./ChatLoading";
-import GroupChatModal from "./miscellaneous/GroupChatModal";
 import { ChatState } from "../Context/ChatProvider";
 import ConfirmModal from "./miscellaneous/ConfirmModal";
-import { Button, IconButton } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import { SocketContext } from "../Context/SocketContext";
 import {useContext} from "react";
 
-const MyChats = ({ fetchAgain }) => {
+const Contact = ({ fetchAgain }) => {
 
-  const { selectedGroup, setSelectedGroup, user, selectedServer, setGroups, groups, myServers } = ChatState();
+  const { user, setContacts, contacts, selectContact, selectedContact, setSelectedContact } = ChatState();
   const { socket } = useContext(SocketContext);
 
   const toast = useToast();
 
     // eslint-disable-next-line
-  const fetchGroups = async () => {
+  const fetchContacts = async () => {
     try {
       const config = {
         headers: {
@@ -27,8 +25,8 @@ const MyChats = ({ fetchAgain }) => {
         },
       };
 
-      const { data } = await axios.get(`/api/chat/group/get-groups/${selectedServer.id}`, config);
-      setGroups(data.groups);
+      const response = await axios.get(`/api/chat/dm/getContacts/`, config);
+      setContacts(response.data.result);
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -42,25 +40,30 @@ const MyChats = ({ fetchAgain }) => {
   };
 
   useEffect(() => {
-    if(selectedServer) fetchGroups();
+    if(selectContact) fetchContacts();
     // eslint-disable-next-line
-  }, [fetchAgain, selectedServer]);
+  }, [selectContact]);
 
   useEffect(() => {
     if(socket){
-      socket.on('delete group', (data) => {
-        setGroups(data);
-        setSelectedGroup(null)
+      socket.on('delete contact', (data) => {
+        console.log(data)
+        setContacts(data);
+        setSelectedContact(null)
       });
     }
-  }, [socket, setGroups, setSelectedGroup])
+  }, [socket, setContacts, setSelectedContact])
 
-  const handleRemoveGroup = async (groupId) => {
-    socket.emit('delete group', {groupId: groupId, serverId: selectedServer.id});
+  const handleRemoveContact = async (contact) => {
+    socket.emit('delete contact', {contact: contact});
+  }
+  function handleClickContact(contact) {
+    setSelectedContact(contact)
+    socket.emit("join contact", {wallet_address: contact.wallet_address, contact_wallet: contact.contact_wallet});
   }
   return (
     <Box
-      d={{ base: selectedServer ? "none" : "flex", md: "flex" }}
+      d={{ base: selectContact ? "none" : "flex", md: "flex" }}
       flexDir="column"
       alignItems="center"
       p={3}
@@ -79,18 +82,7 @@ const MyChats = ({ fetchAgain }) => {
         justifyContent="space-between"
         alignItems="center"
       >
-        Groups
-        {(selectedServer && myServers.some((s) => s.id === selectedServer.id)) &&
-          <GroupChatModal>
-            <Button
-              className="add-group-btn"
-              d="flex"
-              fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-              rightIcon={<AddIcon />}
-            >
-            </Button>
-          </GroupChatModal>
-        }
+        Contacts
       </Box>
       <Box
         d="flex"
@@ -102,38 +94,36 @@ const MyChats = ({ fetchAgain }) => {
         borderRadius="lg"
         overflowY="hidden"
       >
-        {groups ? (
+        {contacts.length > 0 && (
           <Stack overflowY="scroll">
-            {groups.map((group) => {
+            {contacts.map((contact) => {
+            const contactName = contact.wallet_address === user._id ? contact.contact_wallet : contact.wallet_address;
+                const contactKey = contact.wallet_address + contact.contact_wallet;
+                const selectedKey = selectedContact?.wallet_address + selectedContact?.contact_wallet;
               return <Box
-                onClick={() => setSelectedGroup(group)}
+                onClick={() => handleClickContact(contact)}
                 cursor="pointer"
-                bg={selectedGroup === group ? "#38B2AC" : "#E8E8E8"}
-                color={selectedGroup === group ? "white" : "black"}
+                bg={contactKey === selectedKey ? "#38B2AC" : "#E8E8E8"}
+                color={contactKey === selectedKey ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
-                key={group.id}
+                key={contact.wallet_address + contact.contact_wallet}
                 className="flex justify-between items-center"
               >
                 <Text>
-                  # {group.group_name}
+                  {contactName.substring(0, 6) + "..." + contactName.slice(-4)}
                 </Text>
-                {
-                  (selectedServer && myServers.some((s) => s.id === selectedServer.id)) &&
-                  <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.id)}>
+                <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveContact(contact)}>
                     <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
-                  </ConfirmModal>
-                }
+                </ConfirmModal>
               </Box>
             })}
           </Stack>
-        ) : (
-          <ChatLoading />
         )}
       </Box>
     </Box>
   );
 };
 
-export default MyChats;
+export default Contact;

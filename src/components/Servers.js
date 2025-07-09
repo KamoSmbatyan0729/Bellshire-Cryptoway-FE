@@ -16,7 +16,7 @@ import {useContext} from "react";
 
 const MyChats = ({ fetchAgain }) => {
 
-  const { selectedServer, setSelectedServer, user, myServers, setMyServers, joinedServers, setJoinedServers, setSelectedGroup } = ChatState();
+  const { selectedServer, setSelectedServer, user, myServers, setMyServers, joinedServers, setJoinedServers, setSelectedGroup, setGroups, selectContact, setSelectContact } = ChatState();
   const { socket } = useContext(SocketContext);
 
   const toast = useToast();
@@ -56,6 +56,8 @@ const MyChats = ({ fetchAgain }) => {
     socket.on("leave server", (data) => {
       setJoinedServers(data);
       setSelectedServer(null);
+      setSelectedGroup(null);
+      setGroups([])
     })
   })
   
@@ -69,9 +71,16 @@ const MyChats = ({ fetchAgain }) => {
   }, [fetchAgain]);
 
   function handleClickServer(server){
+    setSelectContact(false)
     setSelectedServer(server);
     setSelectedGroup(null)
     socket.emit("join server", server.id)
+  }
+
+  function handleClickDM(){
+    setSelectContact(true);
+    setSelectedServer(null)
+    setSelectedGroup(null)
   }
 
   return (
@@ -85,6 +94,21 @@ const MyChats = ({ fetchAgain }) => {
       borderRadius="lg"
       borderWidth="1px"
     >
+      <Box className="p-3 w-full">
+        <Box
+          onClick={handleClickDM}
+          cursor="pointer"
+          bg={selectContact ? "#38B2AC" : "#E8E8E8"}
+          color={selectContact ? "white" : "black"}
+          px={3}
+          py={2}
+          borderRadius="lg"
+        >
+          <Text>
+            Direct Messages
+          </Text>
+        </Box>
+      </Box>
       <Box
         pb={3}
         px={3}

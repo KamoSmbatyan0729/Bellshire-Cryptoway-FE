@@ -12,38 +12,13 @@ import {
 import { FaRegFile } from "react-icons/fa";
 import { DownloadIcon } from "@chakra-ui/icons";
 import { IconButton } from "@chakra-ui/react";
-import axios from 'axios';
-import { useContext } from "react";
-import { SocketContext } from "../Context/SocketContext";
-
 
 const BackendUrl = process.env.REACT_APP_BACKEND_URL;
 
-const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
-  const { user, contacts, setContacts, setSelectContact, setSelectedContact, setSelectedServer, setSelectedGroup } = ChatState();
-    const { socket } = useContext(SocketContext);
+const ScrollableChat = ({ messages, handleEdit, handleRemove }) => {
+  const { user } = ChatState();
   function handleClickAddress(address){
     navigator.clipboard.writeText(address);
-  }
-  async function handleDirectMessage(message) {
-    const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-
-      const response = await axios.get(
-        `/api/chat/dm/addContact/${message.sender_wallet}`,
-        config
-      );
-      if(!response.data.exist) {
-        setContacts([...contacts, response.data.result]);
-      }
-      socket.emit("join contact", {wallet_address: response.data.result.wallet_address, contact_wallet: response.data.result.contact_wallet})
-      setSelectContact(true);
-      setSelectedContact(response.data.result);
-      setSelectedServer(null);
-      setSelectedGroup(null)
   }
   return (
     <ScrollableFeed className="overflow-x-hidden">
@@ -102,7 +77,7 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                   {m.content}
                 </div>
                 {
-                  m.sender_wallet === user._id ?                  
+                  m.sender_wallet === user._id &&                  
                   <div className="absolute top-0 right-0">
                     <Menu isLazy>
                       <MenuButton p={1}>
@@ -111,18 +86,6 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                       <MenuList>
                         <MenuItem onClick={() => handleEdit(m)}>Edit</MenuItem>
                         <MenuItem onClick={() => handleRemove(m.id)}>Remove</MenuItem>
-                      </MenuList>
-                    </Menu>
-                  </div>
-                  :
-                  <div className="absolute top-0 right-0">
-                    <Menu isLazy>
-                      <MenuButton p={1}>
-                        <HiDotsVertical />
-                      </MenuButton>
-                      <MenuList>
-                        <MenuItem onClick={() => handleClickAddress(m.sender_wallet)}>Copy Address</MenuItem>
-                        <MenuItem onClick={() => handleDirectMessage(m)}>Direct Message</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>
@@ -135,4 +98,4 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
   );
 };
 
-export default ScrollableDMChat;
+export default ScrollableChat;
