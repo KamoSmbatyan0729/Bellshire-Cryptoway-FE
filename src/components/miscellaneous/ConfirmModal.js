@@ -10,7 +10,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 
-const ConfirmRemoveModal = ({ title, description, onConfirm, children }) => {
+const ConfirmModal = ({ title, description, onConfirm, children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleConfirm = async () => {
@@ -24,7 +24,7 @@ const ConfirmRemoveModal = ({ title, description, onConfirm, children }) => {
 
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent className="!bg-gray-900 !text-white">
           <ModalHeader
             fontSize="35px"
             fontFamily="Work sans"
@@ -34,11 +34,11 @@ const ConfirmRemoveModal = ({ title, description, onConfirm, children }) => {
             {title}
           </ModalHeader>
           <ModalCloseButton />
-          <ModalBody d="flex" flexDir="column" alignItems="center">
+          <ModalBody d="flex" flexDir="column" alignItems="center" className="text-center">
             {description}
           </ModalBody>
           <ModalFooter>
-            <Button onClick={handleConfirm} colorScheme="red">
+            <Button onClick={handleConfirm} colorScheme="dark">
               Yes
             </Button>
           </ModalFooter>
@@ -48,4 +48,4 @@ const ConfirmRemoveModal = ({ title, description, onConfirm, children }) => {
   );
 };
 
-export default ConfirmRemoveModal;
+export default ConfirmModal;

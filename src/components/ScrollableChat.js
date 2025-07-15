@@ -63,7 +63,7 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                 <div
                   style={{
                     backgroundColor: `${
-                      m.sender_wallet === user._id ? "#BEE3F8" : "#B9F5D0"
+                      m.sender_wallet === user._id ? "#364153" : "#73829b"
                     }`,
                     borderRadius: "5px",
                     padding: "5px 30px 5px 15px",
@@ -108,9 +108,9 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                       <MenuButton p={1}>
                         <HiDotsVertical />
                       </MenuButton>
-                      <MenuList>
-                        <MenuItem onClick={() => handleEdit(m)}>Edit</MenuItem>
-                        <MenuItem onClick={() => handleRemove(m.id)}>Remove</MenuItem>
+                      <MenuList className="!bg-gray-500">
+                        <MenuItem onClick={() => handleEdit(m)} _hover={{ bg: 'gray.600' }}>Edit</MenuItem>
+                        <MenuItem onClick={() => handleRemove(m.id)} _hover={{ bg: 'gray.600' }}>Remove</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>
@@ -120,9 +120,9 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                       <MenuButton p={1}>
                         <HiDotsVertical />
                       </MenuButton>
-                      <MenuList>
-                        <MenuItem onClick={() => handleClickAddress(m.sender_wallet)}>Copy Address</MenuItem>
-                        <MenuItem onClick={() => handleDirectMessage(m)}>Direct Message</MenuItem>
+                      <MenuList className="!bg-gray-500">
+                        <MenuItem onClick={() => handleClickAddress(m.sender_wallet)} _hover={{ bg: 'gray.600' }}>Copy Address</MenuItem>
+                        <MenuItem onClick={() => handleDirectMessage(m)} _hover={{ bg: 'gray.600' }}>Direct Message</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>

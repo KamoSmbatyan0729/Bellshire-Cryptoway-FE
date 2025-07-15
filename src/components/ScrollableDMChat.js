@@ -83,9 +83,9 @@ const ScrollableChat = ({ messages, handleEdit, handleRemove }) => {
                       <MenuButton p={1}>
                         <HiDotsVertical />
                       </MenuButton>
-                      <MenuList>
-                        <MenuItem onClick={() => handleEdit(m)}>Edit</MenuItem>
-                        <MenuItem onClick={() => handleRemove(m.id)}>Remove</MenuItem>
+                      <MenuList className="!bg-gray-500">
+                        <MenuItem onClick={() => handleEdit(m)} _hover={{ bg: 'gray.600' }}>Edit</MenuItem>
+                        <MenuItem onClick={() => handleRemove(m.id)} _hover={{ bg: 'gray.600' }}>Remove</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>

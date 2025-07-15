@@ -47,7 +47,6 @@ const Contact = ({ fetchAgain }) => {
   useEffect(() => {
     if(socket){
       socket.on('delete contact', (data) => {
-        console.log(data)
         setContacts(data);
         setSelectedContact(null)
       });
@@ -67,10 +66,9 @@ const Contact = ({ fetchAgain }) => {
       flexDir="column"
       alignItems="center"
       p={3}
-      bg="white"
+      bg="dark"
       w={{ base: "100%", md: "31%" }}
       borderRadius="lg"
-      borderWidth="1px"
     >
       <Box
         pb={3}
@@ -88,11 +86,12 @@ const Contact = ({ fetchAgain }) => {
         d="flex"
         flexDir="column"
         p={3}
-        bg="#F8F8F8"
+        bg="dark"
         w="100%"
         h="100%"
         borderRadius="lg"
         overflowY="hidden"
+        className="bg-gray-600"
       >
         {contacts.length > 0 && (
           <Stack overflowY="scroll">
@@ -103,19 +102,19 @@ const Contact = ({ fetchAgain }) => {
               return <Box
                 onClick={() => handleClickContact(contact)}
                 cursor="pointer"
-                bg={contactKey === selectedKey ? "#38B2AC" : "#E8E8E8"}
+                bg={contactKey === selectedKey ? "#707c8d" : "#4a5565"}
                 color={contactKey === selectedKey ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
                 key={contact.wallet_address + contact.contact_wallet}
-                className="flex justify-between items-center"
+                className="flex justify-between items-center !text-white !border-2 !border-gray-300"
               >
                 <Text>
                   {contactName.substring(0, 6) + "..." + contactName.slice(-4)}
                 </Text>
                 <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveContact(contact)}>
-                    <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
+                    <IconButton aria-label='Remove Group' colorScheme="dark" icon={<DeleteIcon />} />
                 </ConfirmModal>
               </Box>
             })}

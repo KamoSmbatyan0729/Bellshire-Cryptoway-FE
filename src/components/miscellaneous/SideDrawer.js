@@ -23,29 +23,31 @@ import { useState } from "react";
 import axios from "axios";
 import { useToast } from "@chakra-ui/toast";
 import ChatLoading from "../ChatLoading";
-import { Spinner } from "@chakra-ui/spinner";
 import NotificationBadge from "react-notification-badge";
 import { Effect } from "react-notification-badge";
 import { ChatState } from "../../Context/ChatProvider";
 import ConfirmModal from "./ConfirmModal";
-import { SocketContext } from "../../Context/SocketContext";
-import {useContext} from "react";
+import ConfirmStakingModal from "./ConfirmStakingModal";
+import ConfirmUnstakingModal from "./ConfirmUnstakingModal";
+import ConfirmClaimModal from "./ConfirmClaimModal";
+import ConfirmJoinModal from "./ConfirmJoinModal";
+import approveTokens from "../../Contract/approve";
+import { ethers } from 'ethers';
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingChat, setLoadingChat] = useState(false);
-  const { socket } = useContext(SocketContext);
 
   const {
     setSelectedChat,
     user,
     notification,
     setNotification,
-    setJoinedServers,
     joinedServers,
-    setSelectedServer
+    contract,
+    activated,
+    setActivated
   } = ChatState();
 
   const toast = useToast();
@@ -94,34 +96,43 @@ function SideDrawer() {
     }
   };
 
-  const handleJoinServer = async (serverId) => {
-
+  async function handleActivate() {
     try {
-      setLoadingChat(true);
-      const config = {
-        headers: {
-          "Content-type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(`/api/chat/server/join`, { serverId }, config);
+      await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, 1);
 
-      setSelectedServer(data.server)
-      setJoinedServers(prev => [...prev, data.server]);
-      socket.emit("join server", data.server.id);
-      setLoadingChat(false);
-      onClose();
-    } catch (error) {
+      const tx = await contract.activateAccount(ethers.utils.parseEther("1"));
+
       toast({
-        title: "Error Joining the server",
-        description: error.message,
+        title: "Processing...",
+        description: "Waiting for transaction confirmation...",
+        status: "info",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+
+      await tx.wait();
+      setActivated(true);
+      toast({
+        title: "Success",
+        description: "Your account has been activated!",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+    } catch (error) {
+      console.log(error);
+      toast({
+        title: "Error",
+        description: error.message || "Activation failed.",
         status: "error",
         duration: 5000,
         isClosable: true,
         position: "bottom-left",
       });
     }
-  };
+  }
 
   return (
     <>
@@ -129,10 +140,9 @@ function SideDrawer() {
         d="flex"
         justifyContent="space-between"
         alignItems="center"
-        bg="white"
         w="100%"
         p="5px 10px 5px 10px"
-        borderWidth="5px"
+        className="!bg-gray-600 text-white"
       >
         <Tooltip label="Search Servers to join" hasArrow placement="bottom-end">
           <Button variant="ghost" onClick={onOpen}>
@@ -154,7 +164,7 @@ function SideDrawer() {
               />
               <BellIcon fontSize="2xl" m={1} />
             </MenuButton>
-            <MenuList pl={2}>
+            <MenuList pl={2} className="!bg-gray-500">
               {!notification.length && "No New Messages"}
               {notification.map((notif) => (
                 <MenuItem
@@ -170,7 +180,7 @@ function SideDrawer() {
             </MenuList>
           </Menu>
           <Menu>
-            <MenuButton as={Button} bg="white" rightIcon={<ChevronDownIcon />}>
+            <MenuButton as={Button} bg="dark" rightIcon={<ChevronDownIcon />}>
               <Avatar
                 size="sm"
                 cursor="pointer"
@@ -178,16 +188,54 @@ function SideDrawer() {
                 src={user.pic}
               />
             </MenuButton>
-            <MenuList>
-              <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+            <MenuList className="!bg-gray-500">
+              {
+                !activated &&                
+                <ConfirmModal
+                  title="Confirm Activation"
+                  description={
+                    <>
+                      Are you sure you want to activate your account?
+                      <br />
+                      You need to pay 0.1 HYPE to activate your account.
+                    </>
+                  }
+                  onConfirm={handleActivate}
+                >
+                  <span>
+                    <MenuItem _hover={{ bg: 'gray.600' }}>Activate</MenuItem>
+                  </span>
+                </ConfirmModal>
+              }
+              {
+                activated &&
+                <ConfirmStakingModal>
+                  <MenuItem _hover={{ bg: 'gray.600' }}>Staking</MenuItem>
+                </ConfirmStakingModal>
+              }
+              {
+                activated &&
+                <ConfirmUnstakingModal>
+                  <MenuItem _hover={{ bg: 'gray.600' }}>Unstaking</MenuItem>
+                </ConfirmUnstakingModal>
+              }
+              {
+                activated &&
+                <ConfirmClaimModal>
+                  <MenuItem _hover={{ bg: 'gray.600' }}>Claim</MenuItem>
+                </ConfirmClaimModal>
+              }
+
+              <MenuItem onClick={logoutHandler} _hover={{ bg: 'gray.600' }}>Logout</MenuItem>
             </MenuList>
+
           </Menu>
         </div>
       </Box>
 
       <Drawer placement="left" onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
-        <DrawerContent>
+        <DrawerContent className="!bg-gray-500 !text-white">
           <DrawerHeader borderBottomWidth="1px">Search Users</DrawerHeader>
           <DrawerBody>
             <Box d="flex" pb={2}>
@@ -197,7 +245,7 @@ function SideDrawer() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <Button onClick={handleSearch}>Go</Button>
+              <Button onClick={handleSearch} bg="dark">Go</Button>
             </Box>
             {loading ? (
                 <ChatLoading />
@@ -226,20 +274,17 @@ function SideDrawer() {
                         <Box>
                           <Text>{server.server_name}</Text>
                         </Box>
-                        <ConfirmModal
-                          title="Join Confirmation"
-                          description="Are you sure you want to join?"
-                          onConfirm={() => handleJoinServer(server.id)}
+                        <ConfirmJoinModal
+                          server={server}
                         >
                           <IconButton aria-label="Join Server" colorScheme="red" icon={<LinkIcon />} />
-                        </ConfirmModal>
+                        </ConfirmJoinModal>
                       </Box>
                     );
                   }
                   return null;
                 })
               )}
-            {loadingChat && <Spinner ml="auto" d="flex" />}
           </DrawerBody>
         </DrawerContent>
       </Drawer>

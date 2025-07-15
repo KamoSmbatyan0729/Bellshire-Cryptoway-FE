@@ -89,20 +89,21 @@ const MyChats = ({ fetchAgain }) => {
       flexDir="column"
       alignItems="center"
       p={3}
-      bg="white"
+      bg="dark"
       w={{ base: "100%", md: "31%" }}
       borderRadius="lg"
-      borderWidth="1px"
+      className=" text-white border-nont"
     >
       <Box className="p-3 w-full">
         <Box
           onClick={handleClickDM}
           cursor="pointer"
-          bg={selectContact ? "#38B2AC" : "#E8E8E8"}
+          bg={selectContact ? "#707c8d" : "#4a5565"}
           color={selectContact ? "white" : "black"}
           px={3}
           py={2}
           borderRadius="lg"
+          className="!text-white"
         >
           <Text>
             Direct Messages
@@ -126,6 +127,7 @@ const MyChats = ({ fetchAgain }) => {
             d="flex"
             fontSize={{ base: "17px", md: "10px", lg: "17px" }}
             rightIcon={<AddIcon />}
+            colorScheme="dark"
           >
           </Button>
         </ServerChatModal>
@@ -134,11 +136,11 @@ const MyChats = ({ fetchAgain }) => {
         d="flex"
         flexDir="column"
         p={3}
-        bg="#F8F8F8"
         w="100%"
         h="100%"
         borderRadius="lg"
         overflowY="hidden"
+        className="bg-gray-600"
       >
         <Text className="!mb-3">
           My Servers
@@ -149,19 +151,19 @@ const MyChats = ({ fetchAgain }) => {
               <Box
                 onClick={() => handleClickServer(server)}
                 cursor="pointer"
-                bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
+                bg={selectedServer === server ? "#707c8d" : "#4a5565"}
                 color={selectedServer === server ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
-                className="flex justify-between items-center"
+                className="flex justify-between items-center !text-white !border-2 !border-gray-400"
                 key={server.id}
               >
                 <Text>
                   {server.server_name}
                 </Text>
                 <ConfirmModal title={"Confirm Removal"} description="Are you sure you want to remove?" onConfirm={() => handleRemoveServer(server.id)}>
-                  <IconButton aria-label='Remove Server' colorScheme="red" icon={<DeleteIcon />} />
+                  <IconButton aria-label='Remove Server' colorScheme="dard" icon={<DeleteIcon />} />
                 </ConfirmModal>
               </Box>
             ))}
@@ -178,19 +180,19 @@ const MyChats = ({ fetchAgain }) => {
               <Box
                 onClick={() => handleClickServer(server)}
                 cursor="pointer"
-                bg={selectedServer === server ? "#38B2AC" : "#E8E8E8"}
+                bg={selectedServer === server ? "#707c8d" : "#4a5565"}
                 color={selectedServer === server ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
                 key={server.id}
-                className="flex justify-between items-center"
+                className="flex justify-between items-center !text-white !border-2 !border-gray-400"
               >
                 <Text>
                   {server.server_name}
                 </Text>
                 <ConfirmModal title={"Leave Confirmation"} description="Are you sure you want to leave?" onConfirm={() => handleLeaveServer(server.id)}>
-                  <IconButton aria-label='Leave Server' colorScheme="red" icon={<IoMdExit size={20}/>} />
+                  <IconButton aria-label='Leave Server' colorScheme="dark" icon={<IoMdExit size={20}/>} />
                 </ConfirmModal>                
               </Box>
             ))}

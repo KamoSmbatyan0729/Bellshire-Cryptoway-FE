@@ -295,13 +295,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   return (
     <>
       {selectedContact ? (
-        <Box className="w-full h-full relative" {...getRootProps()}>
+        <Box className="w-full h-full relative !bg-gray-500" {...getRootProps()}>
           <Box
             d="flex"
             flexDir="column"
             justifyContent="flex-end"
             p={3}
-            bg="#E8E8E8"
+            bg="dark"
             w="100%"
             h="100%"
             borderRadius="lg"
@@ -319,7 +319,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 <div className="w-full h-full flex items-center justify-center text-white text-lg">
                   <div className="rounded-xl bg-[#5864F2] text-white p-3 text-center">
                     <div className="rounded-xl border-white p-5 m-2 border-dashed">
-                      <p className="text-2xl font-bold">Upload To {contactAddress}</p>
+                      <p className="text-2xl font-bold !text-white">Upload To {contactAddress}</p>
                       <p>you can add comments before uploading.</p>
                     </div>
                   </div>
@@ -361,7 +361,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               )}
               {
                 editMode &&
-                <div className="flex items-center justify-between p-3 bg-[#e0e0e0]">
+                <div className="flex items-center justify-between p-3 bg-gray-700">
                   <div className="flex items-center">
                     <MdEdit />
                     <div className="ml-3">
@@ -376,7 +376,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               }
               {
                 (fileAttach && attachedFiles.length > 0) &&
-                <div className="flex items-center justify-between p-3 bg-[#e0e0e0] relative">
+                <div className="flex items-center justify-between p-3 relative bg-gray-700">
                   {
                     fileUpload &&
                     <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-black opacity-70 z-100">
@@ -393,7 +393,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     {
                       attachedFiles.map((file, index) => {
                         return <div className="flex items-center" key={index}>
-                          <div className="rounded-lg p-20 flex justify-center items-center relative bg-gray-400 me-3">
+                          <div className="rounded-lg p-20 flex justify-center items-center relative bg-gray-900 me-3">
                             <FaRegFile size={30} />
                             <IconButton className="!absolute top-2 right-2" size="xs" aria-label='Remove File' colorScheme="red" icon={<DeleteIcon size={10}/>} onClick={() => handleRemoveFile(file)}/>
                             <p className="absolute bottom-2 left-2 text-xs">{file.name}</p>
@@ -415,6 +415,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 onChange={typingHandler}
                 ref={inputRef}
                 disabled={fileUpload}
+                className="!bg-gray-700 text-white"
               />
               <div ref={emojiRef} className="absolute right-5 bottom-[6px] cursor-pointer" onClick={() => {setClickEmoji(!clickEmoji)}}>
                 <MdEmojiEmotions size={30}/>

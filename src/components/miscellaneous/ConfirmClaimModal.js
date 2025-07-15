@@ -8,60 +8,41 @@ import {
   ModalCloseButton,
   Button,
   useDisclosure,
-  FormControl,
-  Input,
   useToast,
+  Spinner,
+  Text
 } from "@chakra-ui/react";
-import axios from "axios";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 
-const GroupChatModal = ({ children }) => {
+const ConfirmClaimModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [groupChatName, setGroupChatName] = useState();
   const toast = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const { user, selectedServer, setGroups } = ChatState();
+  const { contract } = ChatState();
 
   const handleSubmit = async () => {
-    if (!groupChatName) {
-      toast({
-        title: "Please fill group name",
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-        position: "top",
-      });
-      return;
-    }
 
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      };
-      const { data } = await axios.post(
-        `/api/chat/group/create`,
-        {
-          groupName: groupChatName,
-          serverId: selectedServer.id
-        },
-        config
-      );
-      setGroups(data.groups);
+      setLoading(true)       
+      const tx = await contract.claimReward();
+      await tx.wait();
+      setLoading(false)
       onClose();
       toast({
-        title: "New Group Chat Created!",
+        title: "You claimed",
         status: "success",
         duration: 5000,
         isClosable: true,
         position: "bottom",
       });
     } catch (error) {
+      console.log(error.data.message)
+      onClose();
       toast({
-        title: "Failed to Create the Chat!",
-        description: error.data,
+        title: "Failed to claim!",
+        description: "Failed to claim!",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -77,27 +58,37 @@ const GroupChatModal = ({ children }) => {
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
         <ModalContent  className="!bg-gray-900 !text-white">
+          {
+            loading &&
+            <div className="absolute bg-black w-full h-full opacity-70 z-[1000]">
+              <div className="flex justify-center items-center h-full">
+                <Spinner
+                  thickness='4px'
+                  speed='0.65s'
+                  emptyColor='gray.200'
+                  color='blue.500'
+                  size='xl'
+                />
+              </div>
+            </div>
+          }
           <ModalHeader
             fontSize="35px"
             fontFamily="Work sans"
             d="flex"
             justifyContent="center"
           >
-            Create Group Chat
+            Confirmation Claim
           </ModalHeader>
           <ModalCloseButton />
-          <ModalBody d="flex" flexDir="column" alignItems="center">
-            <FormControl>
-              <Input
-                placeholder="Chat Name"
-                mb={3}
-                onChange={(e) => setGroupChatName(e.target.value)}
-              />
-            </FormControl>
+          <ModalBody d="flex" flexDir="column">
+            <Text className="text-start">
+              Are you sure you want to claim the rewards?
+            </Text>
           </ModalBody>
           <ModalFooter>
             <Button onClick={handleSubmit} colorScheme="dark">
-              Create Group
+              Claim
             </Button>
           </ModalFooter>
         </ModalContent>
@@ -106,4 +97,4 @@ const GroupChatModal = ({ children }) => {
   );
 };
 
-export default GroupChatModal;
+export default ConfirmClaimModal;

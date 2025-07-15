@@ -15,8 +15,8 @@ export default function Header(){
     const connectedAccount = useWallet();
     const toast = useToast();
     const history = useHistory();
-    const { setUser } = ChatState();
-        const { socket, setSocket } = useContext(SocketContext);
+    const { setUser, setActivated, contract } = ChatState();
+    const { socket, setSocket } = useContext(SocketContext);
 
     useEffect(() => {
         setAccount(connectedAccount.account);
@@ -24,6 +24,8 @@ export default function Header(){
 
     const handleConnect = async () => {
         if(account){
+            const tx = await contract.checkIsActivated(account);
+            setActivated(tx);
             history.push("/chats");
         } else {
             try {
@@ -45,16 +47,24 @@ export default function Header(){
                 }
                 setUser(response.userData);
                 localStorage.setItem("userInfo", JSON.stringify(response.userData));
+                const tx = await contract.checkIsActivated(response.account);
+                setActivated(tx);
                 history.push("/chats");
             } catch (err) {
-                alert(err.message);
+                toast({
+                    title: err.message,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom",
+                });
             }
         }
     };
     return (
         <Box className="h-20 px-10 flex justify-between items-center">
             <Image src="./assets/images/logo.svg" className="w-16 h-16"/>
-            <Button onClick={handleConnect}>
+            <Button onClick={handleConnect} colorScheme="dark" className="!text-xl">
                 {account ? account.substring(0, 6) + "..." + account.slice(-4) : "Connect"}
             </Button>
         </Box>

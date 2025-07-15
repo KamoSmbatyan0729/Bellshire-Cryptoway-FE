@@ -22,18 +22,12 @@ const advantageTexts = [
     "You can easily send tokens, too.",
 ];
 
-const recommendServices = [
-    "BrunToEarn",
-    "Token Generator",
-    "List a token",
-];
-
 export default function Landingpage() {
     const [account, setAccount] = useState(null);
     const connectedAccount = useWallet();
     const history = useHistory();
     const toast = useToast();
-    const { setUser } = ChatState();
+    const { setUser, setActivated, contract } = ChatState();
     const { socket, setSocket } = useContext(SocketContext);
 
     useEffect(() => {
@@ -61,6 +55,8 @@ export default function Landingpage() {
                 setSocket(newSocket);
             }
             localStorage.setItem("userInfo", JSON.stringify(data));
+            const tx = await contract.checkIsActivated(connectedAccount.account);
+            setActivated(tx);
             history.push("/chats");
         } else {
             try {
@@ -77,6 +73,13 @@ export default function Landingpage() {
                 localStorage.setItem("userInfo", JSON.stringify(response.userData));
                 history.push("/chats");
             } catch (err) {
+                toast({
+                    title: err.message,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom",
+                });
                 // alert(err.message);
             }
         }
@@ -86,34 +89,20 @@ export default function Landingpage() {
             <Box className="h-full p-10">
                 <Container maxW={"5xl"}>
                     <Image src="./assets/images/logo.svg" className="block mx-auto w-20" />
-                    <p className="text-center !my-20">Bellshire Chat System</p>
+                    <p className="text-center !my-20 text-5xl font-bold">Bellshire Chat System</p>
                     <Grid templateColumns={{ base: "repeat(1, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }} gap="6">
                         {
                             advantageTexts.map((text, index) => {
                                 return (
-                                    <Box className="py-5 bg-white text-center" key={index}>
+                                    <Box className="py-5 bg-gray-500 text-center" key={index}>
                                         {text}
                                     </Box>
                                 )
                             })
                         }
                     </Grid>
-                    <p className="text-center !my-5">Recommended Service</p>
-                    <Box className="flex justify-center">
-                        <Box className="bg-white sm:flex block rounded-sm p-2 gap-3">
-                            {
-                                recommendServices.map((service, index) => {
-                                    return (
-                                        <Box key={index} className="bg-[#e2e8f0] py-3 px-5 rounded-sm cursor-pointer md:my-0 my-2 text-center">
-                                            {service}
-                                        </Box>
-                                    )
-                                })
-                            }
-                        </Box>
-                    </Box>
                     <Box className="flex justify-center mt-10">
-                        <Button onClick={handleConnect} className="block mx-auto !rounded-2xl !px-5" leftIcon={<ChatIcon />} colorScheme='red' variant='solid'>
+                        <Button onClick={handleConnect} className="block mx-auto !rounded-2xl !px-5 !border-white !broder-2 !text-2xl" leftIcon={<ChatIcon />} colorScheme='dark' variant='solid'>
                             Start a Chat
                         </Button>
                     </Box>

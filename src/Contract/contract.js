@@ -1,17 +1,10 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
+import contractABI from './abis/BellshireProxy.json'; // copy ABI to src/abis
 
-// Set up the provider (Metamask injected provider)
-const provider = new ethers.providers.Web3Provider(window.ethereum);
+const contractAddress = process.env.REACT_APP_PROXY_CONTRACT_ADDRESS;
 
-// Get the signer (for write functions)
-const signer = provider.getSigner();
-
-// Define contract address and ABI
-const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS;
-const contractABI = [
-  "function owner() public view returns (address)"
-];
-
-// Create contract instance
-const contract = new ethers.Contract(contractAddress, contractABI, signer);
-export default contract;
+export const getContract = () => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  return new ethers.Contract(contractAddress, contractABI.abi, signer);
+};

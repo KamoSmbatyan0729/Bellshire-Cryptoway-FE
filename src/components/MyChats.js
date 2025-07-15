@@ -64,10 +64,9 @@ const MyChats = ({ fetchAgain }) => {
       flexDir="column"
       alignItems="center"
       p={3}
-      bg="white"
+      bg="dark"
       w={{ base: "100%", md: "31%" }}
       borderRadius="lg"
-      borderWidth="1px"
     >
       <Box
         pb={3}
@@ -85,6 +84,7 @@ const MyChats = ({ fetchAgain }) => {
             <Button
               className="add-group-btn"
               d="flex"
+              colorScheme="dark"
               fontSize={{ base: "17px", md: "10px", lg: "17px" }}
               rightIcon={<AddIcon />}
             >
@@ -96,11 +96,11 @@ const MyChats = ({ fetchAgain }) => {
         d="flex"
         flexDir="column"
         p={3}
-        bg="#F8F8F8"
         w="100%"
         h="100%"
         borderRadius="lg"
         overflowY="hidden"
+        className="bg-gray-600"
       >
         {groups ? (
           <Stack overflowY="scroll">
@@ -108,13 +108,13 @@ const MyChats = ({ fetchAgain }) => {
               return <Box
                 onClick={() => setSelectedGroup(group)}
                 cursor="pointer"
-                bg={selectedGroup === group ? "#38B2AC" : "#E8E8E8"}
+                bg={selectedGroup === group ? "#707c8d" : "#4a5565"}
                 color={selectedGroup === group ? "white" : "black"}
                 px={3}
                 py={2}
                 borderRadius="lg"
                 key={group.id}
-                className="flex justify-between items-center"
+                className="flex justify-between items-center !text-white !border-2 !border-gray-300"
               >
                 <Text>
                   # {group.group_name}
@@ -122,7 +122,7 @@ const MyChats = ({ fetchAgain }) => {
                 {
                   (selectedServer && myServers.some((s) => s.id === selectedServer.id)) &&
                   <ConfirmModal title="Confirm Removal" description="Are you sure you want to remove?" onConfirm={() => handleRemoveGroup(group.id)}>
-                    <IconButton aria-label='Remove Group' colorScheme="red" icon={<DeleteIcon />} />
+                    <IconButton aria-label='Remove Group' colorScheme="dark" icon={<DeleteIcon />} />
                   </ConfirmModal>
                 }
               </Box>
