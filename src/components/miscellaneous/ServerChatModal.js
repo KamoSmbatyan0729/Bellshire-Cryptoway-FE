@@ -14,7 +14,7 @@ import {
   Text,
   Spinner
 } from "@chakra-ui/react";
-import axios from "axios";
+import axios from "../../api/axiosInstance";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import { SocketContext } from "../../Context/SocketContext";

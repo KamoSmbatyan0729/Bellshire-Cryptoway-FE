@@ -17,7 +17,7 @@ import { ChatState } from "../../Context/ChatProvider";
 import { ethers } from 'ethers';
 import { SocketContext } from "../../Context/SocketContext";
 import {useContext} from "react";
-import axios from "axios";
+import axios from "../../api/axiosInstance";
 import approveTokens from "../../Contract/approve";
 
 const ConfirmJoinModal = ({ children, server }) => {

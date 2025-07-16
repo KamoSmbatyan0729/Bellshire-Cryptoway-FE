@@ -20,7 +20,7 @@ import { BellIcon, ChevronDownIcon, LinkIcon } from "@chakra-ui/icons";
 import { Avatar } from "@chakra-ui/avatar";
 import { useHistory } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
+import axios from "../../api/axiosInstance";
 import { useToast } from "@chakra-ui/toast";
 import ChatLoading from "../ChatLoading";
 import NotificationBadge from "react-notification-badge";

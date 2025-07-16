@@ -1,7 +1,7 @@
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { Box, Stack, Text } from "@chakra-ui/layout";
 import { useToast } from "@chakra-ui/toast";
-import axios from "axios";
+import axios from "../api/axiosInstance";
 import { useEffect } from "react";
 import ChatLoading from "./ChatLoading";
 import ServerChatModal from "./miscellaneous/ServerChatModal";

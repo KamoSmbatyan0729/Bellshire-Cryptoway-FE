@@ -7,7 +7,7 @@ import useWallet from "../Context/useWallet";
 import { useHistory } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
 import { ChatState } from "../Context/ChatProvider";
-import axios from "axios";
+import axios from "../api/axiosInstance";
 import { SocketContext } from "../Context/SocketContext";
 import io from "socket.io-client";
 import {useContext} from "react";

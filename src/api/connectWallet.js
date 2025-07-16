@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from "./axiosInstance";
 export async function connectWallet() {
   if (window.ethereum) {
     try {

@@ -12,7 +12,7 @@ import {
   Input,
   useToast,
 } from "@chakra-ui/react";
-import axios from "axios";
+import axios from "../../api/axiosInstance";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 
