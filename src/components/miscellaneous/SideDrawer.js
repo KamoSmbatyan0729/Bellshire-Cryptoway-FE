@@ -98,9 +98,10 @@ function SideDrawer() {
 
   async function handleActivate() {
     try {
-      await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, 1);
+      // await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, 1);
 
-      const tx = await contract.activateAccount(ethers.utils.parseEther("1"));
+      const tx = await contract.activateAccount();
+      // const tx = await contract.activateAccount(ethers.utils.parseEther("1"));
 
       toast({
         title: "Processing...",
