@@ -166,8 +166,8 @@ const ServerChatModal = ({ children }) => {
                 mb={3}
                 onChange={(e) => setJoinFee(e.target.value)}
               />
-              <Text>This is the amount users must pay to join your server(hype).</Text>
-              <Text className="text-red-600 !mt-5">Server creation fee is {serverCreationFee / (10 ** 18)} hype.</Text>
+              <Text>This is the amount users must pay to join your server(Bellshire token).</Text>
+              <Text className="text-red-600 !mt-5">Server creation fee is {serverCreationFee / (10 ** 18)} Bellshire token.</Text>
             </FormControl>
           </ModalBody>
           <ModalFooter>

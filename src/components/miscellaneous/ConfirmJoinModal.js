@@ -121,7 +121,7 @@ const { socket } = useContext(SocketContext);
           <ModalCloseButton />
           <ModalBody d="flex" flexDir="column">
             <Text className="text-start">
-              You need to pay {joinFee} hype to join this server
+              You need to pay {joinFee} Bellshire token to join this server
             </Text>
           </ModalBody>
           <ModalFooter>

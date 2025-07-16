@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "version": "0.1.0",
-  "proxy": "http://172.20.1.15:5000",
+  "proxy": "http://75.119.153.92:5000",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^1.0.13",

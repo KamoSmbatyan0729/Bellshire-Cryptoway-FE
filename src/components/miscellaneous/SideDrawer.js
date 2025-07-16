@@ -31,6 +31,7 @@ import ConfirmStakingModal from "./ConfirmStakingModal";
 import ConfirmUnstakingModal from "./ConfirmUnstakingModal";
 import ConfirmClaimModal from "./ConfirmClaimModal";
 import ConfirmJoinModal from "./ConfirmJoinModal";
+import GuideModal from "./GuideModal";
 import approveTokens from "../../Contract/approve";
 import { ethers } from 'ethers';
 
@@ -157,6 +158,9 @@ function SideDrawer() {
           Bellshire
         </Text>
         <div>
+          <GuideModal>
+            <Button bg="dark">Guide</Button>
+          </GuideModal>
           <Menu>
             <MenuButton p={1}>
               <NotificationBadge
@@ -198,7 +202,7 @@ function SideDrawer() {
                     <>
                       Are you sure you want to activate your account?
                       <br />
-                      You need to pay 0.1 HYPE to activate your account.
+                      You need to pay 1 Bellshire token to activate your account.
                     </>
                   }
                   onConfirm={handleActivate}

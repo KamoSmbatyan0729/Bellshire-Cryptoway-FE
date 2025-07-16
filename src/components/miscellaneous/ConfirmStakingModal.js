@@ -129,7 +129,7 @@ const ConfirmStakingModal = ({ children }) => {
               />
             </FormControl>
             <Text className="text-start">
-              You staked {stackedAmount} hype
+              You staked {stackedAmount} Bellshire token
             </Text>
           </ModalBody>
           <ModalFooter>
