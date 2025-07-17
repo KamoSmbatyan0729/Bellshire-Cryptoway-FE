@@ -1,5 +1,6 @@
+import contractABI from './abis/BellshireProxy.json';
 const Web3 = require('web3');
-import contractABI from './abis/BellshireProxy.json'; // copy ABI to src/abis
+ // copy ABI to src/abis
 
 const contractAddress = process.env.REACT_APP_PROXY_CONTRACT_ADDRESS;
 
