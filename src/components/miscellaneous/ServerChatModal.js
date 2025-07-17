@@ -18,9 +18,10 @@ import axios from "../../api/axiosInstance";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import { SocketContext } from "../../Context/SocketContext";
-import {useContext, useEffect} from "react";
+import { useContext, useEffect } from "react";
 import { ethers } from 'ethers';
 import approveTokens from "../../Contract/approve";
+const Web3 = require('web3');
 
 const ServerChatModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -43,7 +44,7 @@ const ServerChatModal = ({ children }) => {
       });
       return;
     }
-    if(!activated){
+    if (!activated) {
       toast({
         title: "Failed to Create the Server!",
         description: "You should activate your account first!",
@@ -57,17 +58,20 @@ const ServerChatModal = ({ children }) => {
 
     try {
       setLoading(true)
-      const creationFee = serverCreationFee / (10 ** 18);
-      await approveTokens(process.env.REACT_APP_PROXY_CHANNEL_CONTRACT_ADDRESS, creationFee);   
-      const tx = await contract.createPremiumChannel(
-        ethers.utils.parseEther(creationFee.toString())
-      );
-      const receipt = await tx.wait();
-      const event = receipt.events?.find(
-        (e) => e.event === "ChannelCreated"
-      );
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
 
-      const channelId = event.args.channelId;
+      const creationFee = serverCreationFee / (10 ** 18);
+      const web3 = new Web3(window.ethereum);
+      const creationFeeInWei = web3.utils.toWei(creationFee.toString(), "ether");
+
+      await approveTokens(process.env.REACT_APP_PROXY_CHANNEL_CONTRACT_ADDRESS, creationFee);
+      const receipt = await contract.methods.createPremiumChannel( creationFeeInWei ).send({ from: sender, gas: 200000 });
+      console.log("receipt", receipt.events);
+      // const event = receipt.events?.ChannelCreated;
+      // console.log("return values : ", event.returnValues);
+
+      const channelId = receipt.events.ChannelCreated[0].returnValues.channelId;
       const config = {
         headers: {
           Authorization: `Bearer ${user.token}`,
@@ -95,6 +99,7 @@ const ServerChatModal = ({ children }) => {
       });
     } catch (error) {
       setLoading(false)
+      console.log(error);
       toast({
         title: "Failed",
         description: "Failed to create a server",
@@ -110,7 +115,7 @@ const ServerChatModal = ({ children }) => {
     const fetchFee = async () => {
       try {
         setLoading(true);
-        const result = await contract.getChannelCreationFee();
+        const result = await contract.methods.getChannelCreationFee().call();
         setServerCreationFee(result.toString());
       } catch (err) {
       } finally {
@@ -154,7 +159,7 @@ const ServerChatModal = ({ children }) => {
           <ModalBody d="flex" flexDir="column" alignItems="center">
             <FormControl>
               <Input
-                placeholder="Chat Name"
+                placeholder="Server Name"
                 mb={3}
                 onChange={(e) => setGroupChatName(e.target.value)}
               />

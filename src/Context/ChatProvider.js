@@ -40,7 +40,7 @@ const ChatProvider = ({ children }) => {
 
       try {
         if(contract && connectedAccount.account){
-          const isActivated  = await contract.checkIsActivated(connectedAccount.account);
+          const isActivated  = await contract.methods.checkIsActivated(connectedAccount.account).call();
           setActivated(isActivated);
         }
       } catch (err) {

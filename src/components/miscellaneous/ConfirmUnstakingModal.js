@@ -37,7 +37,7 @@ const ConfirmUnstakingModal = ({ children }) => {
         position: "top",
       });
       return;
-    }    
+    }
     if (stakingAmount <= 0) {
       toast({
         title: "Please stack first to unstack!",
@@ -50,9 +50,13 @@ const ConfirmUnstakingModal = ({ children }) => {
     }
 
     try {
-      setLoading(true)    
-      const tx = await contract.unstakeFromAccount(ethers.utils.parseEther(stakingAmount.toString()),);
-        await tx.wait();
+      setLoading(true)
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
+
+      const tx = await contract.methods.unstakeFromAccount(ethers.utils.parseEther(stakingAmount.toString())).send({ from: sender, gas: 200000 });
+      //await tx.wait();
       await fetchStackedAmount();
       setLoading(false)
       onClose();
@@ -64,7 +68,7 @@ const ConfirmUnstakingModal = ({ children }) => {
         position: "bottom",
       });
     } catch (error) {
-        onClose();
+      onClose();
       toast({
         title: "Failed to unstake!",
         description: error.data.message || "Failed to unstake!",
@@ -81,7 +85,11 @@ const ConfirmUnstakingModal = ({ children }) => {
 
     try {
       setLoading(true);
-      const result = await contract.getStackAmount();
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const userAddress = accounts[0];
+
+      const result = await contract.methods.getStackAmount().call({ from: userAddress });
       setStackedAmount(ethers.utils.formatEther(result));
     } catch (err) {
       console.error("Failed to fetch staked amount:", err);
@@ -102,7 +110,7 @@ const ConfirmUnstakingModal = ({ children }) => {
 
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent  className="!bg-gray-900 !text-white">
+        <ModalContent className="!bg-gray-900 !text-white">
           {
             loading &&
             <div className="absolute bg-black w-full h-full opacity-70 z-[1000]">

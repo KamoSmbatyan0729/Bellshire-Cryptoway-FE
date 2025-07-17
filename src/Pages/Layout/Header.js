@@ -24,7 +24,7 @@ export default function Header(){
 
     const handleConnect = async () => {
         if(account){
-            const tx = await contract.checkIsActivated(account);
+            const tx = await contract.methods.checkIsActivated(account).call();
             setActivated(tx);
             history.push("/chats");
         } else {
@@ -47,7 +47,7 @@ export default function Header(){
                 }
                 setUser(response.userData);
                 localStorage.setItem("userInfo", JSON.stringify(response.userData));
-                const tx = await contract.checkIsActivated(response.account);
+                const tx = await contract.methods.checkIsActivated(response.account).call();
                 setActivated(tx);
                 history.push("/chats");
             } catch (err) {

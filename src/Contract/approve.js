@@ -15,7 +15,7 @@ const approveTokens = async (spenderAddress, approveAmount) => {
   const amount = ethers.utils.parseEther(approveAmount.toString()); // Approve 100 tokens (18 decimals)
 
   const tx = await tokenContract.approve(spender, amount);
-  await tx.wait();
+  //await tx.wait();
 
 };
 export default approveTokens;

@@ -41,10 +41,14 @@ const ConfirmStakingModal = ({ children }) => {
     }
 
     try {
-      setLoading(true)   
-      await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, stakingAmount);   
-      const tx = await contract.stakeToAccount(ethers.utils.parseEther(stakingAmount));
-      await tx.wait();
+      setLoading(true)
+      await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, stakingAmount);
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
+
+      const tx = await contract.methods.stakeToAccount(ethers.utils.parseEther(stakingAmount)).send({ from: sender, gas: 200000 });
+      //await tx.wait();
       await fetchStackedAmount();
       setLoading(false)
       onClose();
@@ -74,7 +78,11 @@ const ConfirmStakingModal = ({ children }) => {
 
     try {
       setLoading(true);
-      const result = await contract.getStackAmount();
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const userAddress = accounts[0];
+      
+      const result = await contract.methods.getStackAmount().call({ from: userAddress });
       setStackedAmount(ethers.utils.formatEther(result));
     } catch (err) {
       console.error("Failed to fetch staked amount:", err);
@@ -95,7 +103,7 @@ const ConfirmStakingModal = ({ children }) => {
 
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent  className="!bg-gray-900 !text-white">
+        <ModalContent className="!bg-gray-900 !text-white">
           {
             loading &&
             <div className="absolute bg-black w-full h-full opacity-70 z-[1000]">

@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import { ethers } from 'ethers';
 import { SocketContext } from "../../Context/SocketContext";
-import {useContext} from "react";
+import { useContext } from "react";
 import axios from "../../api/axiosInstance";
 import approveTokens from "../../Contract/approve";
 
@@ -27,45 +27,49 @@ const ConfirmJoinModal = ({ children, server }) => {
   const [joinFee, setJoinFee] = useState(0);
 
   const { contract, user, setSelectedServer, setJoinedServers, activated } = ChatState();
-const { socket } = useContext(SocketContext);
+  const { socket } = useContext(SocketContext);
 
   const handleSubmit = async () => {
     try {
-        if(!activated){
-          toast({
-            title: "Failed to Create the Server!",
-            description: "You should activate your account first!",
-            status: "error",
-            duration: 5000,
-            isClosable: true,
-            position: "bottom",
-          });
-          return;
-        }
-        await approveTokens(process.env.REACT_APP_PROXY_CHANNEL_CONTRACT_ADDRESS, joinFee);   
-        const tx = await contract.joinPremiumChannel(server.channel_id);
-        await tx.wait();
-        const config = {
-          headers: {
-            "Content-type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-        };
-        const { data } = await axios.post(`/api/chat/server/join`, { serverId: server.id }, config);
-  
-        setSelectedServer(data.server)
-        setJoinedServers(prev => [...prev, data.server]);
-        socket.emit("join server", data.server.id);
-        onClose();
-      } catch (error) {
+      if (!activated) {
         toast({
-          title: "Error Joining the server",
-          description: error.message,
+          title: "Failed to Create the Server!",
+          description: "You should activate your account first!",
           status: "error",
           duration: 5000,
           isClosable: true,
-          position: "bottom-left",
+          position: "bottom",
         });
+        return;
+      }
+      await approveTokens(process.env.REACT_APP_PROXY_CHANNEL_CONTRACT_ADDRESS, joinFee);
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
+      
+      const tx = await contract.methods.joinPremiumChannel(server.channel_id).send({ from: sender, as: 200000 });
+      //await tx.wait();
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+      const { data } = await axios.post(`/api/chat/server/join`, { serverId: server.id }, config);
+
+      setSelectedServer(data.server)
+      setJoinedServers(prev => [...prev, data.server]);
+      socket.emit("join server", data.server.id);
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error Joining the server",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
     }
   };
 
@@ -74,7 +78,7 @@ const { socket } = useContext(SocketContext);
 
     try {
       setLoading(true);
-      const result = await contract.getChannelPrice(server.channel_id);
+      const result = await contract.methods.getChannelPrice(server.channel_id).call();
       setJoinFee(ethers.utils.formatEther(result));
     } catch (err) {
       console.error("Failed to fetch staked amount:", err);
@@ -95,7 +99,7 @@ const { socket } = useContext(SocketContext);
 
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent  className="!bg-gray-900 !text-white">
+        <ModalContent className="!bg-gray-900 !text-white">
           {
             loading &&
             <div className="absolute bg-black w-full h-full opacity-70 z-[1000]">

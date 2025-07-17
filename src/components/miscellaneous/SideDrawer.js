@@ -100,8 +100,10 @@ function SideDrawer() {
   async function handleActivate() {
     try {
       // await approveTokens(process.env.REACT_APP_PROXY_USERS_CONTRACT_ADDRESS, 1);
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const sender = accounts[0];
 
-      const tx = await contract.activateAccount();
+      const tx = await contract.methods.activateAccount().send({ from: sender, gas: 200000 });
       // const tx = await contract.activateAccount(ethers.utils.parseEther("1"));
 
       toast({
@@ -113,7 +115,7 @@ function SideDrawer() {
         position: "bottom-left",
       });
 
-      await tx.wait();
+      //await tx.wait();
       setActivated(true);
       toast({
         title: "Success",
@@ -195,7 +197,7 @@ function SideDrawer() {
             </MenuButton>
             <MenuList className="!bg-gray-500">
               {
-                !activated &&                
+                !activated &&
                 <ConfirmModal
                   title="Confirm Activation"
                   description={
@@ -253,8 +255,8 @@ function SideDrawer() {
               <Button onClick={handleSearch} bg="dark">Go</Button>
             </Box>
             {loading ? (
-                <ChatLoading />
-              ) : (
+              <ChatLoading />
+            ) : (
                 searchResult?.map((server) => {
                   if (!joinedServers.some((s) => s.id === server.id)) {
                     return (

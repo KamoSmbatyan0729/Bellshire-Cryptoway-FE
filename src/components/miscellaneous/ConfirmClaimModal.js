@@ -25,9 +25,13 @@ const ConfirmClaimModal = ({ children }) => {
   const handleSubmit = async () => {
 
     try {
-      setLoading(true)       
-      const tx = await contract.claimReward();
-      await tx.wait();
+      setLoading(true)
+
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const user = accounts[0];
+      
+      const tx = await await contract.methods.claimReward().send({ from: user, gas: 200000 });
+      
       setLoading(false)
       onClose();
       toast({
@@ -57,7 +61,7 @@ const ConfirmClaimModal = ({ children }) => {
 
       <Modal onClose={onClose} isOpen={isOpen} isCentered>
         <ModalOverlay />
-        <ModalContent  className="!bg-gray-900 !text-white">
+        <ModalContent className="!bg-gray-900 !text-white">
           {
             loading &&
             <div className="absolute bg-black w-full h-full opacity-70 z-[1000]">

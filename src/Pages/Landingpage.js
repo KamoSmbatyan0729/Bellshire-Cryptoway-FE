@@ -55,7 +55,7 @@ export default function Landingpage() {
                 setSocket(newSocket);
             }
             localStorage.setItem("userInfo", JSON.stringify(data));
-            const tx = await contract.checkIsActivated(connectedAccount.account);
+            const tx = await contract.methods.checkIsActivated(connectedAccount.account).call();
             setActivated(tx);
             history.push("/chats");
         } else {
