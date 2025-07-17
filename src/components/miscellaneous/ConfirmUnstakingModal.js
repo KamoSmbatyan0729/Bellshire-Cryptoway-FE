@@ -55,7 +55,7 @@ const ConfirmUnstakingModal = ({ children }) => {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const sender = accounts[0];
 
-      const tx = await contract.methods.unstakeFromAccount(ethers.utils.parseEther(stakingAmount.toString())).send({ from: sender, gas: 200000 });
+      const tx = await contract.methods.unstakeFromAccount(web3.utils.fromWei(stakingAmount.toString(), "ether")).send({ from: sender, gas: 200000 });
       //await tx.wait();
       await fetchStackedAmount();
       setLoading(false)
