@@ -30,7 +30,7 @@ const ConfirmClaimModal = ({ children }) => {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const user = accounts[0];
       
-      const tx = await await contract.methods.claimReward().send({ from: user, gas: 200000 });
+      await contract.methods.claimReward().send({ from: user, gas: 200000 });
       
       setLoading(false)
       onClose();

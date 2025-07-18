@@ -19,7 +19,6 @@ import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
 import { SocketContext } from "../../Context/SocketContext";
 import { useContext, useEffect } from "react";
-import { ethers } from 'ethers';
 import approveTokens from "../../Contract/approve";
 const Web3 = require('web3');
 

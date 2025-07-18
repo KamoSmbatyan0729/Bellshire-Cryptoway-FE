@@ -32,8 +32,7 @@ import ConfirmUnstakingModal from "./ConfirmUnstakingModal";
 import ConfirmClaimModal from "./ConfirmClaimModal";
 import ConfirmJoinModal from "./ConfirmJoinModal";
 import GuideModal from "./GuideModal";
-import approveTokens from "../../Contract/approve";
-import { ethers } from 'ethers';
+// import approveTokens from "../../Contract/approve";
 
 function SideDrawer() {
   const [search, setSearch] = useState("");
@@ -103,7 +102,7 @@ function SideDrawer() {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const sender = accounts[0];
 
-      const tx = await contract.methods.activateAccount().send({ from: sender, gas: 200000 });
+      await contract.methods.activateAccount().send({ from: sender, gas: 200000 });
       // const tx = await contract.activateAccount(ethers.utils.parseEther("1"));
 
       toast({

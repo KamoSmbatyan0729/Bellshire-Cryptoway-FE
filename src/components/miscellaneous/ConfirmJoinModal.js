@@ -47,9 +47,9 @@ const ConfirmJoinModal = ({ children, server }) => {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const sender = accounts[0];
 
-      console.log("sender ", sender);
+      // console.log("sender ", sender);
       
-      const tx = await contract.methods.joinPremiumChannel(server.channel_id).send({ from: sender, as: 200000 });
+      await contract.methods.joinPremiumChannel(server.channel_id).send({ from: sender, as: 200000 });
       
       //await tx.wait();
       const config = {

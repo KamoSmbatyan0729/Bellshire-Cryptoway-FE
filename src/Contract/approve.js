@@ -20,7 +20,7 @@ const approveTokens = async (spenderAddress, approveAmount) => {
   const spender = spenderAddress; // Contract or user allowed to spend
   const amount = web3.utils.toWei(approveAmount.toString(), "ether"); // Approve 100 tokens (18 decimals)  
 
-  const tx = await tokenContract.methods.approve(spender, amount).send({ from: sender,  gas: 200000})
+  await tokenContract.methods.approve(spender, amount).send({ from: sender,  gas: 200000})
   .on("receipt", function (receipt) {
     console.log("Approval confirmed!", receipt);
   })

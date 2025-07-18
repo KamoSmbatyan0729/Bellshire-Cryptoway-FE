@@ -401,15 +401,20 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 disabled={fileUpload}
                 className="!bg-gray-700 text-white"
               />
-              <div ref={emojiRef} className="absolute right-5 bottom-[6px] cursor-pointer" onClick={() => {setClickEmoji(!clickEmoji)}}>
-                <MdEmojiEmotions size={30}/>
-              </div>
-              {
-                clickEmoji &&
-                <div className="absolute right-0 bottom-[105%]">
-                  <EmojiPicker onEmojiClick={onClickEmoji}/>
+              <div ref={emojiRef} className="absolute right-5 bottom-[6px]">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => setClickEmoji(!clickEmoji)}
+                >
+                  <MdEmojiEmotions size={30} />
                 </div>
-              }
+                
+                {clickEmoji && (
+                  <div className="absolute right-0 bottom-[105%]">
+                    <EmojiPicker onEmojiClick={onClickEmoji} />
+                  </div>
+                )}
+              </div>
             </FormControl>
           </Box>
         </Box>
