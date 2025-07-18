@@ -47,6 +47,9 @@ const ConfirmStakingModal = ({ children }) => {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const sender = accounts[0];
 
+      console.log("sender ", sender);
+      console.log("stakingAmount ", stakingAmount);
+
       await contract.methods.stakeToAccount(ethers.utils.parseEther(stakingAmount)).send({ from: sender, gas: 200000 });
       //await tx.wait();
       await fetchStackedAmount();
