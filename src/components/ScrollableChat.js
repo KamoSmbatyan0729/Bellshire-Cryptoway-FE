@@ -13,8 +13,9 @@ import { FaRegFile } from "react-icons/fa";
 import { DownloadIcon } from "@chakra-ui/icons";
 import { IconButton } from "@chakra-ui/react";
 import axios from 'axios';
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { SocketContext } from "../Context/SocketContext";
+import SendTipModal from "./miscellaneous/SendTipModal";
 
 
 const BackendUrl = process.env.REACT_APP_BACKEND_URL;
@@ -22,6 +23,18 @@ const BackendUrl = process.env.REACT_APP_BACKEND_URL;
 const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
   const { user, contacts, setContacts, setSelectContact, setSelectedContact, setSelectedServer, setSelectedGroup } = ChatState();
     const { socket } = useContext(SocketContext);
+    const [tipAddress, setTipAddress] = useState(null);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    function handleTipOpen(address) {
+      setModalOpen(true)
+      setTipAddress(address);
+    }
+    function handleTipClose() {
+      setTipAddress(null);
+      setModalOpen(false);
+    }
+
   function handleClickAddress(address){
     navigator.clipboard.writeText(address);
   }
@@ -123,6 +136,7 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
                       <MenuList className="!bg-gray-500">
                         <MenuItem onClick={() => handleClickAddress(m.sender_wallet)} _hover={{ bg: 'gray.600' }}>Copy Address</MenuItem>
                         <MenuItem onClick={() => handleDirectMessage(m)} _hover={{ bg: 'gray.600' }}>Direct Message</MenuItem>
+                        <MenuItem onClick={() => handleTipOpen(m.sender_wallet)} _hover={{ bg: 'gray.600' }}>Send Tips</MenuItem>
                       </MenuList>
                     </Menu>
                   </div>
@@ -131,6 +145,9 @@ const ScrollableDMChat = ({ messages, handleEdit, handleRemove }) => {
             </div>         
           </div>
         })}
+        {modalOpen && (
+          <SendTipModal isOpen={modalOpen} onClose={handleTipClose} address={tipAddress} />
+        )}
     </ScrollableFeed>
   );
 };
