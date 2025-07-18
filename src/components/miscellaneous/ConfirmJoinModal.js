@@ -50,7 +50,7 @@ const ConfirmJoinModal = ({ children, server }) => {
       console.log("sender ", sender);
       console.log("channel_id ", server.channel_id);
       
-      await contract.methods.joinPremiumChannel(server.channel_id).send({ from: sender, gas: 200000 });
+      await contract.methods.joinPremiumChannel(server.channel_id).send({ from: sender, gas: 300000 });
       
       //await tx.wait();
       const config = {

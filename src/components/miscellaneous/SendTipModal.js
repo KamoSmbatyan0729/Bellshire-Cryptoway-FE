@@ -45,7 +45,7 @@ const SendTipModal = ({ isOpen, onClose, address }) => {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const sender = accounts[0];
 
-      await contract.methods.tipUser(address, ethers.utils.parseEther(tipAmount)).send({ from: sender, gas: 200000 });
+      await contract.methods.tipUser(address, ethers.utils.parseEther(tipAmount)).send({ from: sender, gas: 300000 });
       //await tx.wait();
       setLoading(false)
       onClose();
@@ -61,7 +61,7 @@ const SendTipModal = ({ isOpen, onClose, address }) => {
       onClose();
       toast({
         title: "Failed to send tip!",
-        description: "Failed to stake!",
+        description: "Failed to tips!",
         status: "error",
         duration: 5000,
         isClosable: true,
